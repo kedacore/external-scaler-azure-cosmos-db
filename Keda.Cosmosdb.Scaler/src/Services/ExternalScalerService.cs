@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Data.Common;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Grpc.Core;
 using Keda.Cosmosdb.Scaler.Protos;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 
@@ -24,7 +24,7 @@ namespace Keda.Cosmosdb.Scaler.Services
 
                 if (isActive)
                 {
-                    logger.Log(string.Format("Activating to 1 for cosmosDB database {0} collection {1}", trigger.DatabaseName, trigger.CollectionName));
+                    logger.Log(string.Format("Activating to 1 for cosmosDB account {0} database {1} collection {2}", trigger.AccountName, trigger.DatabaseName, trigger.CollectionName));
                 }
             }
             catch(Exception ex)
@@ -43,7 +43,10 @@ namespace Keda.Cosmosdb.Scaler.Services
             var resp = new GetMetricSpecResponse();
             resp.MetricSpecs.Add(new MetricSpec
             {
-                MetricName = "WorkToBeDone",
+                MetricName = NormalizeString(string.Format("{0}-{1}-{2}-{3}", "azure-cosmosDB",
+                                        request.ScalerMetadata[CosmosDbTriggerMetadata.AccountName],
+                                        request.ScalerMetadata[CosmosDbTriggerMetadata.DatabaseName],
+                                        request.ScalerMetadata[CosmosDbTriggerMetadata.CollectionName])),
                 TargetSize = 1
             });
             return Task.FromResult(resp);
@@ -51,24 +54,23 @@ namespace Keda.Cosmosdb.Scaler.Services
 
         public override async Task<GetMetricsResponse> GetMetrics(GetMetricsRequest request, ServerCallContext context)
         {
-            long workToBeDone = 0;
+            var resp = new GetMetricsResponse();
             try
             {
                 var trigger = CreateTriggerFromMetadata(request.ScaledObjectRef.ScalerMetadata);
-                workToBeDone = await GetEstimatedWork(trigger);
+                long workToBeDone = await GetEstimatedWork(trigger);
+
+                var metricName = request.ScaledObjectRef.ScalerMetadata["MetricName"];
+                resp.MetricValues.Add(new MetricValue
+                {
+                    MetricName = metricName,
+                    MetricValue_ = workToBeDone
+                });
             }
             catch (Exception ex)
             {
                 logger.Log(ex.Message);
             }
-
-            var resp = new GetMetricsResponse();
-            resp.MetricValues.Add(new MetricValue
-            {
-                MetricName = "WorkToBeDone",
-                MetricValue_ = workToBeDone
-            });
-
             return resp;
         }
 
@@ -82,13 +84,19 @@ namespace Keda.Cosmosdb.Scaler.Services
                 LeasesDocDBConnectionString = scalerMetadata[CosmosDbTriggerMetadata.LeasesDocDBConnectionString],
                 LeaseDatabaseName = scalerMetadata[CosmosDbTriggerMetadata.LeaseDatabaseName],
                 LeaseCollectionName = scalerMetadata[CosmosDbTriggerMetadata.LeaseCollectionName],
-                LeaseCollectionPrefix = string.Empty
+                LeaseCollectionPrefix = string.Empty,
+                AccountName = string.Empty,
             };
 
             // Optional values
             if (scalerMetadata.TryGetValue(CosmosDbTriggerMetadata.LeaseCollectionPrefix, out string leasePrefix))
             {
                 trigger.LeaseCollectionPrefix = leasePrefix;
+            }
+
+            if (scalerMetadata.TryGetValue(CosmosDbTriggerMetadata.AccountName, out string accountName))
+            {
+                trigger.AccountName = accountName;
             }
 
             return trigger;
@@ -149,7 +157,7 @@ namespace Keda.Cosmosdb.Scaler.Services
                     changeFeedHostOptions.LeasePrefix = trigger.LeaseCollectionPrefix;
                 }
 
-                host = new ChangeFeedEventHost(string.Empty, hostProperties.DocumentCollectionLocation, hostProperties.LeaseCollectionLocation, new ChangeFeedOptions(), changeFeedHostOptions);
+                host = new ChangeFeedEventHost(hostProperties.HostName, hostProperties.DocumentCollectionLocation, hostProperties.LeaseCollectionLocation, new ChangeFeedOptions(), changeFeedHostOptions);
             }
             catch (Exception e)
             {
@@ -159,44 +167,9 @@ namespace Keda.Cosmosdb.Scaler.Services
             return host;
         }
 
-        internal class HostPropertiesCollection
+        private static string NormalizeString(string inputString)
         {
-            public DocumentCollectionInfo DocumentCollectionLocation { get; private set; }
-
-            public DocumentCollectionInfo LeaseCollectionLocation { get; private set; }
-
-            public HostPropertiesCollection(DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation)
-            {
-                this.DocumentCollectionLocation = documentCollectionLocation;
-                this.LeaseCollectionLocation = leaseCollectionLocation;
-            }
-        }
-
-        internal class DocumentDBConnectionString
-        {
-            public DocumentDBConnectionString(string connectionString)
-            {
-                // Use this generic builder to parse the connection string
-                DbConnectionStringBuilder builder = new DbConnectionStringBuilder
-                {
-                    ConnectionString = connectionString
-                };
-
-                object key = null;
-                if (builder.TryGetValue("AccountKey", out key))
-                {
-                    AuthKey = key.ToString();
-                }
-
-                object uri;
-                if (builder.TryGetValue("AccountEndpoint", out uri))
-                {
-                    ServiceEndpoint = new Uri(uri.ToString());
-                }
-            }
-
-            public Uri ServiceEndpoint { get; set; }
-            public string AuthKey { get; set; }
+            return inputString.Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-");
         }
     }
 }

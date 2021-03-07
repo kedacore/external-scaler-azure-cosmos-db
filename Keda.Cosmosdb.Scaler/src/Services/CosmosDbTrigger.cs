@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data.Common;
+using Microsoft.Azure.Documents.ChangeFeedProcessor;
 
 
 namespace Keda.Cosmosdb.Scaler.Services
@@ -13,6 +14,7 @@ namespace Keda.Cosmosdb.Scaler.Services
         public string LeaseDatabaseName { get; internal set; }
         public string LeaseCollectionName { get; internal set; }
         public string LeaseCollectionPrefix { get; internal set; }
+        public string AccountName { get; internal set; }
     }
 
     internal class CosmosDbTriggerMetadata
@@ -24,5 +26,48 @@ namespace Keda.Cosmosdb.Scaler.Services
         public static string LeaseDatabaseName { get { return "leaseDatabaseName"; } }
         public static string LeaseCollectionName { get { return "leaseCollectionName"; } }
         public static string LeaseCollectionPrefix { get { return "leaseCollectionPrefix"; } }
+        public static string AccountName { get { return "accountName"; } }
+    }
+
+    internal class HostPropertiesCollection
+    {
+        public DocumentCollectionInfo DocumentCollectionLocation { get; private set; }
+
+        public DocumentCollectionInfo LeaseCollectionLocation { get; private set; }
+
+        public string HostName = "defaultName";
+
+        public HostPropertiesCollection(DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation)
+        {
+            this.DocumentCollectionLocation = documentCollectionLocation;
+            this.LeaseCollectionLocation = leaseCollectionLocation;
+        }
+    }
+
+    internal class DocumentDBConnectionString
+    {
+        public DocumentDBConnectionString(string connectionString)
+        {
+            // Use this generic builder to parse the connection string
+            DbConnectionStringBuilder builder = new DbConnectionStringBuilder
+            {
+                ConnectionString = connectionString
+            };
+
+            object key = null;
+            if (builder.TryGetValue("AccountKey", out key))
+            {
+                AuthKey = key.ToString();
+            }
+
+            object uri;
+            if (builder.TryGetValue("AccountEndpoint", out uri))
+            {
+                ServiceEndpoint = new Uri(uri.ToString());
+            }
+        }
+
+        public Uri ServiceEndpoint { get; set; }
+        public string AuthKey { get; set; }
     }
 }
