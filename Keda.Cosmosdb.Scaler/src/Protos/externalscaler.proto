@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "Keda.Cosmosdb.Scaler.Protos";
+option csharp_namespace = "Keda.CosmosDB.Scaler.Protos";
 
 package externalscaler;
 option go_package = ".;externalscaler";
