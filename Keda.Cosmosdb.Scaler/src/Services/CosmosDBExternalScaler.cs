@@ -2,22 +2,25 @@
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Grpc.Core;
+using Keda.Cosmosdb.Scaler;
 using Keda.CosmosDB.Scaler.Protos;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.ChangeFeedProcessor.DataAccess;
-using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Logging;
 using static Keda.CosmosDB.Scaler.Protos.ExternalScaler;
+using Keda.CosmosDB.Scaler.Extensions;
+using Keda.CosmosDB.Scaler.Repository;
+using Keda.Cosmosdb.Scaler.Repository;
 
 namespace Keda.CosmosDB.Scaler.Services
 {
     public class CosmosDBExternalScaler : ExternalScalerBase
     {
         private readonly ILogger _logger;
+        private readonly ICosmosDBRepository _cosmosDBRepository;
 
-        public CosmosDBExternalScaler(ILoggerFactory loggerFactory)
+        public CosmosDBExternalScaler(ILoggerFactory loggerFactory, ICosmosDBRepository cosmosDBRepository)
         {
             _logger = loggerFactory.CreateLogger<CosmosDBExternalScaler>();
+            _cosmosDBRepository = cosmosDBRepository;
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
@@ -31,7 +34,8 @@ namespace Keda.CosmosDB.Scaler.Services
 
                 if (isActive)
                 {
-                    _logger.LogDebug(string.Format("Activating to 1 for cosmosDB account {0} database {1} collection {2}", trigger.AccountName, trigger.DatabaseName, trigger.CollectionName));
+                    _logger.LogDebug("Activating to 1 instance for Azure Cosmos DB account {accountName} with database {databaseName} and collection {collectionName}",
+                        trigger.AccountName, trigger.DatabaseName, trigger.CollectionName);
                 }
 
                 return new IsActiveResponse
@@ -39,10 +43,9 @@ namespace Keda.CosmosDB.Scaler.Services
                     Result = isActive
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "Error getting estimated work.");
-                throw ex;
+                throw;
             }
         }
 
@@ -51,10 +54,10 @@ namespace Keda.CosmosDB.Scaler.Services
             var resp = new GetMetricSpecResponse();
             resp.MetricSpecs.Add(new MetricSpec
             {
-                MetricName = NormalizeString(string.Format("{0}-{1}-{2}-{3}", "azure-cosmosDB",
-                                        request.ScalerMetadata[CosmosDBTriggerMetadata.AccountName],
-                                        request.ScalerMetadata[CosmosDBTriggerMetadata.DatabaseName],
-                                        request.ScalerMetadata[CosmosDBTriggerMetadata.CollectionName])),
+                MetricName = StringExtensions.NormalizeString(string.Format("{0}-{1}-{2}-{3}", Constants.AzureCosmosDBMetricPrefix,
+                                        request.ScalerMetadata[Constants.AccountNameMetadata],
+                                        request.ScalerMetadata[Constants.DatabaseNameMetadata],
+                                        request.ScalerMetadata[Constants.CollectionNameMetadata])),
                 TargetSize = 1
             });
             return Task.FromResult(resp);
@@ -75,33 +78,25 @@ namespace Keda.CosmosDB.Scaler.Services
                     MetricValue_ = workToBeDone
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "Error generating GetMetricsResponse");
-                throw ex;
+                throw;
             }
             return resp;
         }
 
         public CosmosDBTrigger CreateTriggerFromMetadata(MapField<string, string> scalerMetadata)
         {
-            var lease = new CosmosDBLease()
+            var trigger = new CosmosDBTrigger(scalerMetadata[Constants.ConnectionStringMetadata], scalerMetadata[Constants.DatabaseNameMetadata], scalerMetadata[Constants.CollectionNameMetadata], string.Empty);
+
+            trigger.Lease = new CosmosDBLease()
             {
-                LeasesCosmosDBConnectionString = scalerMetadata[CosmosDBLeaseMetadata.LeasesCosmosDBConnectionString],
-                LeaseDatabaseName = scalerMetadata[CosmosDBLeaseMetadata.LeaseDatabaseName],
-                LeaseCollectionName = scalerMetadata[CosmosDBLeaseMetadata.LeaseCollectionName]
+                LeasesCosmosDBConnectionString = scalerMetadata[Constants.LeasesConnectionStringMetadata],
+                LeaseDatabaseName = scalerMetadata[Constants.LeaseDatabaseNameMetadata],
+                LeaseCollectionName = scalerMetadata[Constants.LeaseCollectionNameMetadata]
             };
 
-            var trigger = new CosmosDBTrigger()
-            {
-                CollectionName = scalerMetadata[CosmosDBTriggerMetadata.CollectionName],
-                DatabaseName = scalerMetadata[CosmosDBTriggerMetadata.DatabaseName],
-                CosmosDBConnectionString = scalerMetadata[CosmosDBTriggerMetadata.CosmosDBConnectionString],
-                AccountName = string.Empty,
-                Lease = lease
-            };
-
-            if (scalerMetadata.TryGetValue(CosmosDBTriggerMetadata.AccountName, out string accountName))
+            if (scalerMetadata.TryGetValue(Constants.AccountNameMetadata, out string accountName))
             {
                 trigger.AccountName = accountName;
             }
@@ -109,65 +104,10 @@ namespace Keda.CosmosDB.Scaler.Services
             return trigger;
         }
 
-        private async Task<long> GetEstimatedWork (CosmosDBTrigger trigger)
+        private async Task<long> GetEstimatedWork(CosmosDBTrigger trigger)
         {
-            try
-            {
-                var builder = CreateChangeFeedProcessorBuilder(trigger);
-                var workEstimator = await builder.BuildEstimatorAsync();
-                long estimatedRemainingWork = await workEstimator.GetEstimatedRemainingWork();
-                return estimatedRemainingWork;
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Error getting estimated work from host");
-                throw ex;
-            }
-        }
-
-        private static ChangeFeedProcessorBuilder CreateChangeFeedProcessorBuilder(
-            CosmosDBTrigger trigger)
-        {
-            CosmosDBConnectionString triggerConnection = new CosmosDBConnectionString(trigger.CosmosDBConnectionString);
-            DocumentCollectionInfo documentCollectionLocation = new DocumentCollectionInfo
-            {
-                Uri = triggerConnection.ServiceEndpoint,
-                MasterKey = triggerConnection.AuthKey,
-                DatabaseName = trigger.DatabaseName,
-                CollectionName = trigger.CollectionName
-            };
-
-            CosmosDBLease lease = trigger.Lease;
-            CosmosDBConnectionString leaseConnection = new CosmosDBConnectionString(lease.LeasesCosmosDBConnectionString);
-
-            DocumentCollectionInfo leaseCollectionLocation = new DocumentCollectionInfo
-            {
-                Uri = leaseConnection.ServiceEndpoint,
-                MasterKey = leaseConnection.AuthKey,
-                DatabaseName = lease.LeaseDatabaseName,
-                CollectionName = lease.LeaseCollectionName
-            };
-
-            HostPropertiesCollection hostProperties = new HostPropertiesCollection(documentCollectionLocation, leaseCollectionLocation);
-
-            var changeFeedClient = new DocumentClient(documentCollectionLocation.Uri, documentCollectionLocation.MasterKey);
-            IChangeFeedDocumentClient feedDocumentClient = new ChangeFeedDocumentClient(changeFeedClient);
-
-            var leaseClient = new DocumentClient(leaseCollectionLocation.Uri, leaseCollectionLocation.MasterKey);
-            IChangeFeedDocumentClient leaseDocumentClient = new ChangeFeedDocumentClient(leaseClient);
-
-            var builder = new ChangeFeedProcessorBuilder()
-                            .WithHostName(hostProperties.HostName)
-                            .WithFeedCollection(documentCollectionLocation)
-                            .WithLeaseCollection(leaseCollectionLocation)
-                            .WithFeedDocumentClient(feedDocumentClient)
-                            .WithLeaseDocumentClient(leaseDocumentClient);
-            return builder;
-        }
-
-        private static string NormalizeString(string inputString)
-        {
-            return inputString.Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-");
+            var builder = ChangeFeedProcessorBuilderFactory.GetBuilder(trigger);
+            return await _cosmosDBRepository.GetEstimatedWork(builder);
         }
     }
 }

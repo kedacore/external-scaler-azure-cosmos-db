@@ -9,9 +9,6 @@ COPY ["src/Keda.Cosmosdb.Scaler.csproj", "src/"]
 RUN dotnet restore "src/Keda.Cosmosdb.Scaler.csproj"
 COPY . .
 WORKDIR "/src/"
-RUN dotnet build "src/Keda.Cosmosdb.Scaler.csproj" -c Release -o /app/build
-
-FROM build AS publish
 RUN dotnet publish "src/Keda.Cosmosdb.Scaler.csproj" -c Release -o /app/publish
 
 FROM base AS final

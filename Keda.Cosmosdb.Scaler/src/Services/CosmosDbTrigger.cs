@@ -8,10 +8,6 @@
         public string AccountName { get; internal set; }
         public CosmosDBLease Lease { get; internal set; }
 
-        public CosmosDBTrigger()
-        { 
-        }
-
         public CosmosDBTrigger(string connectionString, string databaseName, string collectionName, string accountName)
         {
             CosmosDBConnectionString = connectionString;

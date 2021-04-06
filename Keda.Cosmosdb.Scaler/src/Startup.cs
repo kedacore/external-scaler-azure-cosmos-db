@@ -1,4 +1,5 @@
-﻿using Keda.CosmosDB.Scaler.Services;
+﻿using Keda.CosmosDB.Scaler.Repository;
+using Keda.CosmosDB.Scaler.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace Keda.CosmosDB.Scaler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
+            services.AddSingleton<ICosmosDBRepository, CosmosDBRepository>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

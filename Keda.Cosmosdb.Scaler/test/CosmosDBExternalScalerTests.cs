@@ -8,6 +8,8 @@ using Grpc.Core.Testing;
 using System.Threading;
 using System.Collections.Generic;
 using Google.Protobuf.Collections;
+using Keda.Cosmosdb.Scaler;
+using Keda.CosmosDB.Scaler.Repository;
 
 namespace Keda.CosmosDB.Scaler.UnitTest
 {
@@ -17,7 +19,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public async void IsActiveTest_ThrowsOnMissingMetadata()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            var scaler = new CosmosDBExternalScaler(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+
+            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             await Assert.ThrowsAsync<KeyNotFoundException>(() => scaler.IsActive(objectRef, CreateServerCallContext()));
         }
@@ -26,7 +30,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public async void GetMetricsResponse_ThrowsOnMissingMetadata()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            var scaler = new CosmosDBExternalScaler(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+
+            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             GetMetricsRequest request = new GetMetricsRequest()
             {
@@ -40,18 +46,20 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public void CreateCosmosDBTriggerMetadata_Succeeds()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            var scaler = new CosmosDBExternalScaler(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+
+            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
 
             var metadata = new MapField<string, string>();
             var testLease = CreateTestLease();
-            metadata.Add(CosmosDBLeaseMetadata.LeasesCosmosDBConnectionString, testLease.LeasesCosmosDBConnectionString);
-            metadata.Add(CosmosDBLeaseMetadata.LeaseDatabaseName, testLease.LeaseDatabaseName);
-            metadata.Add(CosmosDBLeaseMetadata.LeaseCollectionName, testLease.LeaseCollectionName);
+            metadata.Add(Constants.LeasesConnectionStringMetadata, testLease.LeasesCosmosDBConnectionString);
+            metadata.Add(Constants.LeaseDatabaseNameMetadata, testLease.LeaseDatabaseName);
+            metadata.Add(Constants.LeaseCollectionNameMetadata, testLease.LeaseCollectionName);
 
             var testTrigger = CreateTestTrigger();
-            metadata.Add(CosmosDBTriggerMetadata.CollectionName, testTrigger.CollectionName);
-            metadata.Add(CosmosDBTriggerMetadata.CosmosDBConnectionString, testTrigger.CosmosDBConnectionString);
-            metadata.Add(CosmosDBTriggerMetadata.DatabaseName, testTrigger.DatabaseName);
+            metadata.Add(Constants.CollectionNameMetadata, testTrigger.CollectionName);
+            metadata.Add(Constants.ConnectionStringMetadata, testTrigger.CosmosDBConnectionString);
+            metadata.Add(Constants.DatabaseNameMetadata, testTrigger.DatabaseName);
             
             var trigger = scaler.CreateTriggerFromMetadata(metadata);
             Assert.Equal(trigger.CollectionName, testTrigger.CollectionName);

@@ -13,17 +13,9 @@ namespace Keda.CosmosDB.Scaler.Services
                 ConnectionString = connectionString
             };
 
-            object key = null;
-            if (builder.TryGetValue(Constants.AccountKey, out key))
-            {
-                AuthKey = key.ToString();
-            }
+            AuthKey = builder[Constants.AccountKey].ToString();
 
-            object uri;
-            if (builder.TryGetValue(Constants.AccountEndpoint, out uri))
-            {
-                ServiceEndpoint = new Uri(uri.ToString());
-            }
+            ServiceEndpoint = new Uri(builder[Constants.AccountEndpoint].ToString());
         }
 
         public Uri ServiceEndpoint { get; set; }
