@@ -9,7 +9,7 @@
 
         public const string CollectionNameMetadata = "collectionName";
         public const string DatabaseNameMetadata = "databaseName";
-        public const string ConnectionStringMetadata ="docDBConnectionString";
+        public const string ConnectionStringMetadata ="cosmosDBConnectionString";
         public const string AccountNameMetadata = "accountName";
 
         public const string LeasesConnectionStringMetadata = "leasesCosmosDBConnectionString";

@@ -13,5 +13,5 @@ RUN dotnet publish "src/Keda.Cosmosdb.Scaler.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Keda.Cosmosdb.Scaler.dll"]

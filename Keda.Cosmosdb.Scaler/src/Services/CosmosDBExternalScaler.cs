@@ -87,7 +87,8 @@ namespace Keda.CosmosDB.Scaler.Services
 
         public CosmosDBTrigger CreateTriggerFromMetadata(MapField<string, string> scalerMetadata)
         {
-            var trigger = new CosmosDBTrigger(scalerMetadata[Constants.ConnectionStringMetadata], scalerMetadata[Constants.DatabaseNameMetadata], scalerMetadata[Constants.CollectionNameMetadata], string.Empty);
+            var trigger = new CosmosDBTrigger(scalerMetadata[Constants.ConnectionStringMetadata],
+                scalerMetadata[Constants.DatabaseNameMetadata], scalerMetadata[Constants.CollectionNameMetadata], string.Empty);
 
             trigger.Lease = new CosmosDBLease()
             {
@@ -106,7 +107,7 @@ namespace Keda.CosmosDB.Scaler.Services
 
         private async Task<long> GetEstimatedWork(CosmosDBTrigger trigger)
         {
-            var builder = ChangeFeedProcessorBuilderFactory.GetBuilder(trigger);
+            var builder = ChangeFeedProcessorBuilderFactory.Instance.GetBuilder(trigger);
             return await _cosmosDBRepository.GetEstimatedWork(builder);
         }
     }

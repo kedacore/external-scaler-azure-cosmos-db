@@ -2,13 +2,36 @@
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.DataAccess;
 using Microsoft.Azure.Documents.Client;
+using System;
+using System.Collections.Generic;
 
 namespace Keda.Cosmosdb.Scaler.Repository
 {
     public class ChangeFeedProcessorBuilderFactory
     {
-        public static ChangeFeedProcessorBuilder GetBuilder(CosmosDBTrigger trigger)
+        private Dictionary<CosmosDBTrigger, ChangeFeedProcessorBuilder> _changeFeedBuilderMap;
+        private static ChangeFeedProcessorBuilderFactory instance = new ChangeFeedProcessorBuilderFactory();
+
+        private ChangeFeedProcessorBuilderFactory()
         {
+            _changeFeedBuilderMap = new Dictionary<CosmosDBTrigger, ChangeFeedProcessorBuilder>(new CosmosDBTriggerComparer());
+        }
+
+        public static ChangeFeedProcessorBuilderFactory Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
+
+        public ChangeFeedProcessorBuilder GetBuilder(CosmosDBTrigger trigger)
+        {
+            if (_changeFeedBuilderMap.TryGetValue(trigger, out ChangeFeedProcessorBuilder builder))
+            {
+                return builder;
+            }
+
             CosmosDBConnectionString triggerConnection = new CosmosDBConnectionString(trigger.CosmosDBConnectionString);
             DocumentCollectionInfo documentCollectionLocation = new DocumentCollectionInfo
             {
@@ -34,12 +57,14 @@ namespace Keda.Cosmosdb.Scaler.Repository
             var leaseClient = new DocumentClient(leaseCollectionLocation.Uri, leaseCollectionLocation.MasterKey);
             IChangeFeedDocumentClient leaseDocumentClient = new ChangeFeedDocumentClient(leaseClient);
 
-            var builder = new ChangeFeedProcessorBuilder()
+            builder = new ChangeFeedProcessorBuilder()
                             .WithHostName(Constants.DefaultHostName)
                             .WithFeedCollection(documentCollectionLocation)
                             .WithLeaseCollection(leaseCollectionLocation)
                             .WithFeedDocumentClient(feedDocumentClient)
                             .WithLeaseDocumentClient(leaseDocumentClient);
+
+            _changeFeedBuilderMap.Add(trigger, builder);
             return builder;
         }
     }
