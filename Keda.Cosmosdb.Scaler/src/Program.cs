@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Keda.Cosmosdb.Scaler;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
@@ -24,7 +25,7 @@ namespace Keda.CosmosDB.Scaler
             {
                 webBuilder.ConfigureKestrel(options =>
                 {
-                    options.Listen(IPAddress.Any, 4050, o => o.Protocols = HttpProtocols.Http2);
+                    options.Listen(IPAddress.Any, Constants.GrpcPort, o => o.Protocols = HttpProtocols.Http2);
                 });
                 webBuilder.UseStartup<Startup>();
             });

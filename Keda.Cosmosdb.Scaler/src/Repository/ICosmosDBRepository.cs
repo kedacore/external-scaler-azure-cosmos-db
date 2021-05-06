@@ -1,10 +1,10 @@
-﻿using Microsoft.Azure.Documents.ChangeFeedProcessor;
+﻿using Microsoft.Azure.Cosmos;
 using System.Threading.Tasks;
 
 namespace Keda.CosmosDB.Scaler.Repository
 {
     public interface ICosmosDBRepository
     {
-        Task<long> GetEstimatedWork(ChangeFeedProcessorBuilder builder);
+        Task<long> GetEstimatedWork(ChangeFeedEstimator estimator);
     }
 }

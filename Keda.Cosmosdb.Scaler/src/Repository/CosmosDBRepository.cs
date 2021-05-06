@@ -1,15 +1,34 @@
-﻿using Microsoft.Azure.Documents.ChangeFeedProcessor;
+﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace Keda.CosmosDB.Scaler.Repository
 {
     public class CosmosDBRepository : ICosmosDBRepository
     {
-        public async Task<long> GetEstimatedWork(ChangeFeedProcessorBuilder builder)
+        private ILogger _logger;
+        public CosmosDBRepository(ILoggerFactory loggerFactory)
         {
-            var workEstimator = await builder.BuildEstimatorAsync();
-            long estimatedRemainingWork = await workEstimator.GetEstimatedRemainingWork();
-            return estimatedRemainingWork;
+            _logger = loggerFactory.CreateLogger<CosmosDBRepository>();
+        }
+
+        public async Task<long> GetEstimatedWork(ChangeFeedEstimator estimator)
+        {
+            using FeedIterator<ChangeFeedProcessorState> estimatorIterator = estimator.GetCurrentStateIterator();
+            while (estimatorIterator.HasMoreResults)
+            {
+                FeedResponse<ChangeFeedProcessorState> states = await estimatorIterator.ReadNextAsync();
+                foreach (ChangeFeedProcessorState leaseState in states)
+                {
+                    if (leaseState.EstimatedLag > 0)
+                    {
+                        _logger.LogDebug(
+                            $"Lease {leaseState.LeaseToken} owned by host {leaseState.InstanceName ?? "None"} has an estimated lag of {leaseState.LeaseToken}");
+                        return leaseState.EstimatedLag;
+                    }
+                }
+            }
+            return 0;
         }
     }
 }

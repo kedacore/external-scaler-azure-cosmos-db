@@ -16,5 +16,7 @@
         public const string LeaseDatabaseNameMetadata = "leaseDatabaseName";
         public const string LeaseCollectionNameMetadata = "leaseCollectionName";
         public const string LeaseCollectionPrefixMetadata = "leaseCollectionPrefix";
+
+        public const int GrpcPort = 4050;
     }
 }

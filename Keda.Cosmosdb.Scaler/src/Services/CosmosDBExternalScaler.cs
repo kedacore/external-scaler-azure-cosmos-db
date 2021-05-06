@@ -25,28 +25,21 @@ namespace Keda.CosmosDB.Scaler.Services
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
         {
-            try
+            var trigger = CreateTriggerFromMetadata(request.ScalerMetadata);
+            var workToBeDone = await GetEstimatedWork(trigger);
+
+            bool isActive = workToBeDone > 0;
+
+            if (isActive)
             {
-                var trigger = CreateTriggerFromMetadata(request.ScalerMetadata);
-                var workToBeDone = await GetEstimatedWork(trigger);
-
-                bool isActive = workToBeDone > 0;
-
-                if (isActive)
-                {
-                    _logger.LogDebug("Activating to 1 instance for Azure Cosmos DB account {accountName} with database {databaseName} and collection {collectionName}",
-                        trigger.AccountName, trigger.DatabaseName, trigger.CollectionName);
-                }
-
-                return new IsActiveResponse
-                {
-                    Result = isActive
-                };
+                _logger.LogDebug("Activating to 1 instance for Azure Cosmos DB account {accountName} with database {databaseName} and collection {collectionName}",
+                    trigger.AccountName, trigger.DatabaseName, trigger.CollectionName);
             }
-            catch (Exception)
+
+            return new IsActiveResponse
             {
-                throw;
-            }
+                Result = isActive
+            };
         }
 
         public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
@@ -65,23 +58,17 @@ namespace Keda.CosmosDB.Scaler.Services
 
         public override async Task<GetMetricsResponse> GetMetrics(GetMetricsRequest request, ServerCallContext context)
         {
-            var resp = new GetMetricsResponse();
-            try
-            {
-                var trigger = CreateTriggerFromMetadata(request.ScaledObjectRef.ScalerMetadata);
-                long workToBeDone = await GetEstimatedWork(trigger);
+            var trigger = CreateTriggerFromMetadata(request.ScaledObjectRef.ScalerMetadata);
+            long workToBeDone = await GetEstimatedWork(trigger);
 
-                var metricName = request.ScaledObjectRef.ScalerMetadata["MetricName"];
-                resp.MetricValues.Add(new MetricValue
-                {
-                    MetricName = metricName,
-                    MetricValue_ = workToBeDone
-                });
-            }
-            catch (Exception)
+            var metricName = request.ScaledObjectRef.ScalerMetadata["MetricName"];
+
+            var resp = new GetMetricsResponse();
+            resp.MetricValues.Add(new MetricValue
             {
-                throw;
-            }
+                MetricName = metricName,
+                MetricValue_ = workToBeDone
+            });
             return resp;
         }
 
@@ -102,13 +89,18 @@ namespace Keda.CosmosDB.Scaler.Services
                 trigger.AccountName = accountName;
             }
 
+            if (scalerMetadata.TryGetValue(Constants.LeaseCollectionPrefixMetadata, out string leasePrefix))
+            {
+                trigger.Lease.LeaseCollectionPrefix = leasePrefix;
+            }
+
             return trigger;
         }
 
         private async Task<long> GetEstimatedWork(CosmosDBTrigger trigger)
         {
-            var builder = ChangeFeedProcessorBuilderFactory.Instance.GetBuilder(trigger);
-            return await _cosmosDBRepository.GetEstimatedWork(builder);
+            var estimator = ChangeFeedEstimatorFactory.Instance.GetOrCreateEstimator(trigger);
+            return await _cosmosDBRepository.GetEstimatedWork(estimator);
         }
     }
 }

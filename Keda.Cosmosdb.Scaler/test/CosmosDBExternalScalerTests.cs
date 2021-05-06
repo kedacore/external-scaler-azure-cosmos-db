@@ -19,7 +19,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public async void IsActiveTest_ThrowsOnMissingMetadata()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
 
             var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
@@ -30,7 +30,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public async void GetMetricsResponse_ThrowsOnMissingMetadata()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
 
             var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
@@ -46,7 +46,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         public void CreateCosmosDBTriggerMetadata_Succeeds()
         {
             ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
 
             var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
 
@@ -78,7 +78,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
 
         private static CosmosDBLease CreateTestLease()
         {
-            return new CosmosDBLease("leaseConnection", "leaseDB", "leaseCollection");
+            return new CosmosDBLease("leaseConnection", "leaseDB", "leaseCollection", "leaseCollectionPrefix");
         }
 
         private static CosmosDBTrigger CreateTestTrigger()

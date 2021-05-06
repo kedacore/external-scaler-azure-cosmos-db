@@ -4,7 +4,7 @@
     {
         public static string NormalizeString(string inputString)
         {
-            return inputString.Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-");
+            return inputString?.Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-").ToLower();
         }
     }
 }
