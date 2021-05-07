@@ -36,7 +36,17 @@ namespace Keda.Cosmosdb.Scaler.Repository
             };
 
             CosmosClient monitoredCosmosDBService = new CosmosClient(trigger.CosmosDBConnectionString, clientOptions);
-            CosmosClient leaseCosmosDBService = new CosmosClient(trigger.Lease.LeasesCosmosDBConnectionString, clientOptions);
+            CosmosClient leaseCosmosDBService;
+
+            if (trigger.CosmosDBConnectionString.Equals(
+                trigger.Lease.LeasesCosmosDBConnectionString, StringComparison.OrdinalIgnoreCase))
+            {
+                leaseCosmosDBService = monitoredCosmosDBService;
+            }
+            else
+            {
+                leaseCosmosDBService = new CosmosClient(trigger.Lease.LeasesCosmosDBConnectionString, clientOptions);
+            }
 
             var monitoredContainer = monitoredCosmosDBService.GetContainer(trigger.DatabaseName, trigger.CollectionName);
             var leaseContainer = leaseCosmosDBService.GetContainer(trigger.Lease.LeaseDatabaseName, trigger.Lease.LeaseCollectionName);

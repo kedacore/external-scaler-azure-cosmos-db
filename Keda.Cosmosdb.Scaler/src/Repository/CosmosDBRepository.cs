@@ -1,5 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Keda.CosmosDB.Scaler.Repository
@@ -14,21 +16,17 @@ namespace Keda.CosmosDB.Scaler.Repository
 
         public async Task<long> GetEstimatedWork(ChangeFeedEstimator estimator)
         {
+            List<ChangeFeedProcessorState> partitionWorkList = new List<ChangeFeedProcessorState>();
+
             using FeedIterator<ChangeFeedProcessorState> estimatorIterator = estimator.GetCurrentStateIterator();
-            while (estimatorIterator.HasMoreResults)
             {
-                FeedResponse<ChangeFeedProcessorState> states = await estimatorIterator.ReadNextAsync();
-                foreach (ChangeFeedProcessorState leaseState in states)
+                while (estimatorIterator.HasMoreResults)
                 {
-                    if (leaseState.EstimatedLag > 0)
-                    {
-                        _logger.LogDebug(
-                            $"Lease {leaseState.LeaseToken} owned by host {leaseState.InstanceName ?? "None"} has an estimated lag of {leaseState.LeaseToken}");
-                        return leaseState.EstimatedLag;
-                    }
+                    FeedResponse<ChangeFeedProcessorState> response = await estimatorIterator.ReadNextAsync();
+                    partitionWorkList.AddRange(response);
                 }
             }
-            return 0;
+            return partitionWorkList.Sum(item => item.EstimatedLag); ;
         }
     }
 }
