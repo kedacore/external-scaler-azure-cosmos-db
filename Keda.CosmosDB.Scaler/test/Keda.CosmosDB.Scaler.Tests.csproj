@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Keda.Cosmosdb.Scaler.csproj" />
+    <ProjectReference Include="..\src\Keda.CosmosDB.Scaler.csproj" />
   </ItemGroup>
 
 </Project>

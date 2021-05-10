@@ -2,13 +2,11 @@
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Grpc.Core;
-using Keda.Cosmosdb.Scaler;
 using Keda.CosmosDB.Scaler.Protos;
 using Microsoft.Extensions.Logging;
 using static Keda.CosmosDB.Scaler.Protos.ExternalScaler;
 using Keda.CosmosDB.Scaler.Extensions;
 using Keda.CosmosDB.Scaler.Repository;
-using Keda.Cosmosdb.Scaler.Repository;
 
 namespace Keda.CosmosDB.Scaler.Services
 {
@@ -17,10 +15,10 @@ namespace Keda.CosmosDB.Scaler.Services
         private readonly ILogger _logger;
         private readonly ICosmosDBRepository _cosmosDBRepository;
 
-        public CosmosDBExternalScaler(ILoggerFactory loggerFactory, ICosmosDBRepository cosmosDBRepository)
+        public CosmosDBExternalScaler(ILogger<CosmosDBExternalScaler> logger, ICosmosDBRepository cosmosDBRepository)
         {
-            _logger = loggerFactory.CreateLogger<CosmosDBExternalScaler>();
-            _cosmosDBRepository = cosmosDBRepository;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cosmosDBRepository = cosmosDBRepository ?? throw new ArgumentNullException(nameof(cosmosDBRepository));
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
@@ -47,7 +45,7 @@ namespace Keda.CosmosDB.Scaler.Services
             var resp = new GetMetricSpecResponse();
             resp.MetricSpecs.Add(new MetricSpec
             {
-                MetricName = StringExtensions.NormalizeString(string.Format("{0}-{1}-{2}-{3}", Constants.AzureCosmosDBMetricPrefix,
+                MetricName = StringHelpers.NormalizeString(string.Format("{0}-{1}-{2}-{3}", Constants.AzureCosmosDBMetricPrefix,
                                         request.ScalerMetadata[Constants.AccountNameMetadata],
                                         request.ScalerMetadata[Constants.DatabaseNameMetadata],
                                         request.ScalerMetadata[Constants.CollectionNameMetadata])),

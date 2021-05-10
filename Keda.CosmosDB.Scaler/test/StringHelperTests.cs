@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Keda.CosmosDB.Scaler.UnitTest
 {
-    public class StringExtensionsTests
+    public class StringHelperTests
     {
         [Theory]
         [InlineData("", "")]
@@ -13,7 +13,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [InlineData("azure-cosmosdb-ACCOUNT-test.database-collection", "azure-cosmosdb-account-test-database-collection")]
         public void NormalizeStringTest(string input, string expected)
         {
-            Assert.Equal(StringExtensions.NormalizeString(input), expected);
+            Assert.Equal(StringHelpers.NormalizeString(input), expected);
         }
     }
 }

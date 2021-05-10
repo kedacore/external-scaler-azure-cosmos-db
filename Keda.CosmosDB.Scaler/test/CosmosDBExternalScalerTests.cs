@@ -8,7 +8,6 @@ using Grpc.Core.Testing;
 using System.Threading;
 using System.Collections.Generic;
 using Google.Protobuf.Collections;
-using Keda.Cosmosdb.Scaler;
 using Keda.CosmosDB.Scaler.Repository;
 
 namespace Keda.CosmosDB.Scaler.UnitTest
@@ -18,10 +17,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public async void IsActiveTest_ThrowsOnMissingMetadata()
         {
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
 
-            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             await Assert.ThrowsAsync<KeyNotFoundException>(() => scaler.IsActive(objectRef, CreateServerCallContext()));
         }
@@ -29,10 +27,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public async void GetMetricsResponse_ThrowsOnMissingMetadata()
         {
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
 
-            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             GetMetricsRequest request = new GetMetricsRequest()
             {
@@ -45,10 +42,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public void CreateCosmosDBTriggerMetadata_Succeeds()
         {
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository(loggerFactory);
+            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
 
-            var scaler = new CosmosDBExternalScaler(loggerFactory, cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
 
             var metadata = new MapField<string, string>();
             var testLease = CreateTestLease();
@@ -84,6 +80,12 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         private static CosmosDBTrigger CreateTestTrigger()
         {
             return new CosmosDBTrigger("connectionString", "databasename", "collectionName", string.Empty);
+        }
+
+        private static ILogger<CosmosDBExternalScaler> CreateTestLogger()
+        {
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            return loggerFactory.CreateLogger<CosmosDBExternalScaler>();
         }
     }
 }

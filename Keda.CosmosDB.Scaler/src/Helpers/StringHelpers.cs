@@ -1,6 +1,6 @@
 ﻿namespace Keda.CosmosDB.Scaler.Extensions
 {
-    public class StringExtensions
+    public static class StringHelpers
     {
         public static string NormalizeString(string inputString)
         {

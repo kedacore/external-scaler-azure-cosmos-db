@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Keda.Cosmosdb.Scaler.Repository
+namespace Keda.CosmosDB.Scaler.Repository
 {
     public class CosmosDBTriggerComparer : IEqualityComparer<CosmosDBTrigger>
     {

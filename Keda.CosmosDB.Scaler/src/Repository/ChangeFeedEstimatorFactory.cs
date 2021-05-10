@@ -1,25 +1,25 @@
 ﻿using Keda.CosmosDB.Scaler.Services;
 using Microsoft.Azure.Cosmos;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
-namespace Keda.Cosmosdb.Scaler.Repository
+namespace Keda.CosmosDB.Scaler.Repository
 {
     public class ChangeFeedEstimatorFactory
     {
-        private Dictionary<CosmosDBTrigger, ChangeFeedEstimator> _changeFeedBuilderMap;
-        private static ChangeFeedEstimatorFactory instance = new ChangeFeedEstimatorFactory();
+        private ConcurrentDictionary<CosmosDBTrigger, ChangeFeedEstimator> _changeFeedBuilderMap;
+        private static ChangeFeedEstimatorFactory _instance = new ChangeFeedEstimatorFactory();
 
         private ChangeFeedEstimatorFactory()
         {
-            _changeFeedBuilderMap = new Dictionary<CosmosDBTrigger, ChangeFeedEstimator>(new CosmosDBTriggerComparer());
+            _changeFeedBuilderMap = new ConcurrentDictionary<CosmosDBTrigger, ChangeFeedEstimator>(new CosmosDBTriggerComparer());
         }
 
         public static ChangeFeedEstimatorFactory Instance
         {
             get
             {
-                return instance;
+                return _instance;
             }
         }
 
@@ -53,7 +53,7 @@ namespace Keda.Cosmosdb.Scaler.Repository
 
             estimator = monitoredContainer.GetChangeFeedEstimator(trigger.Lease.LeaseCollectionPrefix ?? string.Empty, leaseContainer);
 
-            _changeFeedBuilderMap.Add(trigger, estimator);
+            _changeFeedBuilderMap.TryAdd(trigger, estimator);
             return estimator;
         }
     }

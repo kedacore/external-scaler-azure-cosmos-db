@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using Keda.Cosmosdb.Scaler;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;

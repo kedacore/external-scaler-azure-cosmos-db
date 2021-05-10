@@ -1,4 +1,4 @@
-﻿namespace Keda.Cosmosdb.Scaler
+﻿namespace Keda.CosmosDB.Scaler
 {
     public class Constants
     {

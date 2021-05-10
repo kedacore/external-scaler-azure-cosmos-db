@@ -5,13 +5,13 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
-COPY ["src/Keda.Cosmosdb.Scaler.csproj", "src/"]
-RUN dotnet restore "src/Keda.Cosmosdb.Scaler.csproj"
+COPY ["src/Keda.CosmosDB.Scaler.csproj", "src/"]
+RUN dotnet restore "src/Keda.CosmosDB.Scaler.csproj"
 COPY . .
 WORKDIR "/src/"
-RUN dotnet publish "src/Keda.Cosmosdb.Scaler.csproj" -c Release -o /app/publish
+RUN dotnet publish "src/Keda.CosmosDB.Scaler.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "Keda.Cosmosdb.Scaler.dll"]
+ENTRYPOINT ["dotnet", "Keda.CosmosDB.Scaler.dll"]

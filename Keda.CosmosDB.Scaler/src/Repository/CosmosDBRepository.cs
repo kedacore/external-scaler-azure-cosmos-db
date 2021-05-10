@@ -8,12 +8,6 @@ namespace Keda.CosmosDB.Scaler.Repository
 {
     public class CosmosDBRepository : ICosmosDBRepository
     {
-        private ILogger _logger;
-        public CosmosDBRepository(ILoggerFactory loggerFactory)
-        {
-            _logger = loggerFactory.CreateLogger<CosmosDBRepository>();
-        }
-
         public async Task<long> GetEstimatedWork(ChangeFeedEstimator estimator)
         {
             List<ChangeFeedProcessorState> partitionWorkList = new List<ChangeFeedProcessorState>();
