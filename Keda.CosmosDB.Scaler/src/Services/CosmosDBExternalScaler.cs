@@ -13,12 +13,12 @@ namespace Keda.CosmosDB.Scaler.Services
     public class CosmosDBExternalScaler : ExternalScalerBase
     {
         private readonly ILogger _logger;
-        private readonly ICosmosDBRepository _cosmosDBRepository;
+        private readonly ICosmosDBEstimator _cosmosDBEstimator;
 
-        public CosmosDBExternalScaler(ILogger<CosmosDBExternalScaler> logger, ICosmosDBRepository cosmosDBRepository)
+        public CosmosDBExternalScaler(ILogger<CosmosDBExternalScaler> logger, ICosmosDBEstimator cosmosDBEstimator)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _cosmosDBRepository = cosmosDBRepository ?? throw new ArgumentNullException(nameof(cosmosDBRepository));
+            _cosmosDBEstimator = cosmosDBEstimator ?? throw new ArgumentNullException(nameof(cosmosDBEstimator));
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
@@ -97,8 +97,7 @@ namespace Keda.CosmosDB.Scaler.Services
 
         private async Task<long> GetEstimatedWork(CosmosDBTrigger trigger)
         {
-            var estimator = ChangeFeedEstimatorFactory.Instance.GetOrCreateEstimator(trigger);
-            return await _cosmosDBRepository.GetEstimatedWork(estimator);
+            return await _cosmosDBEstimator.GetEstimatedWork(trigger);
         }
     }
 }

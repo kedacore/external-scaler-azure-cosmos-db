@@ -12,7 +12,7 @@ namespace Keda.CosmosDB.Scaler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
-            services.AddSingleton<ICosmosDBRepository, CosmosDBRepository>();
+            services.AddSingleton<ICosmosDBEstimator, CosmosDBEstimator>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

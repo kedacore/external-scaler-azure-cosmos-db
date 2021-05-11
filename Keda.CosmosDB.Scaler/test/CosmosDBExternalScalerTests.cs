@@ -17,9 +17,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public async void IsActiveTest_ThrowsOnMissingMetadata()
         {
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBEstimator cosmosDBEstimator = new CosmosDBEstimator();
 
-            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBEstimator);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             await Assert.ThrowsAsync<KeyNotFoundException>(() => scaler.IsActive(objectRef, CreateServerCallContext()));
         }
@@ -27,9 +27,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public async void GetMetricsResponse_ThrowsOnMissingMetadata()
         {
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBEstimator cosmosDBEstimator = new CosmosDBEstimator();
 
-            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBEstimator);
             ScaledObjectRef objectRef = new ScaledObjectRef();
             GetMetricsRequest request = new GetMetricsRequest()
             {
@@ -42,9 +42,9 @@ namespace Keda.CosmosDB.Scaler.UnitTest
         [Fact]
         public void CreateCosmosDBTriggerMetadata_Succeeds()
         {
-            ICosmosDBRepository cosmosDBRepository = new CosmosDBRepository();
+            ICosmosDBEstimator cosmosDBEstimator = new CosmosDBEstimator();
 
-            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBRepository);
+            var scaler = new CosmosDBExternalScaler(CreateTestLogger(), cosmosDBEstimator);
 
             var metadata = new MapField<string, string>();
             var testLease = CreateTestLease();

@@ -2,28 +2,22 @@
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Keda.CosmosDB.Scaler.Repository
 {
-    public class ChangeFeedEstimatorFactory
+    public class CosmosDBEstimator : ICosmosDBEstimator
     {
         private ConcurrentDictionary<CosmosDBTrigger, ChangeFeedEstimator> _changeFeedBuilderMap;
-        private static ChangeFeedEstimatorFactory _instance = new ChangeFeedEstimatorFactory();
 
-        private ChangeFeedEstimatorFactory()
+        public CosmosDBEstimator()
         {
             _changeFeedBuilderMap = new ConcurrentDictionary<CosmosDBTrigger, ChangeFeedEstimator>(new CosmosDBTriggerComparer());
         }
 
-        public static ChangeFeedEstimatorFactory Instance
-        {
-            get
-            {
-                return _instance;
-            }
-        }
-
-        public ChangeFeedEstimator GetOrCreateEstimator(CosmosDBTrigger trigger)
+        internal ChangeFeedEstimator GetOrCreateEstimator(CosmosDBTrigger trigger)
         {
             if (_changeFeedBuilderMap.TryGetValue(trigger, out ChangeFeedEstimator estimator))
             {
@@ -55,6 +49,22 @@ namespace Keda.CosmosDB.Scaler.Repository
 
             _changeFeedBuilderMap.TryAdd(trigger, estimator);
             return estimator;
+        }
+
+        public async Task<long> GetEstimatedWork(CosmosDBTrigger trigger)
+        {
+            ChangeFeedEstimator estimator = GetOrCreateEstimator(trigger);
+            List<ChangeFeedProcessorState> partitionWorkList = new List<ChangeFeedProcessorState>();
+
+            using FeedIterator<ChangeFeedProcessorState> estimatorIterator = estimator.GetCurrentStateIterator();
+            {
+                while (estimatorIterator.HasMoreResults)
+                {
+                    FeedResponse<ChangeFeedProcessorState> response = await estimatorIterator.ReadNextAsync();
+                    partitionWorkList.AddRange(response);
+                }
+            }
+            return partitionWorkList.Sum(item => item.EstimatedLag); ;
         }
     }
 }
