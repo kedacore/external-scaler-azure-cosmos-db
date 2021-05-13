@@ -1,4 +1,6 @@
-﻿namespace Keda.CosmosDB.Scaler.Services
+﻿using System;
+
+namespace Keda.CosmosDB.Scaler.Services
 {
     public class CosmosDBLease
     {
@@ -7,16 +9,11 @@
         public string LeaseCollectionName { get; internal set; }
         public string LeaseCollectionPrefix { get; internal set; }
 
-        public CosmosDBLease()
+        public CosmosDBLease(string leaseConnectionString, string leaseDatabaseName, string leaseCollectionName)
         {
-        }
-
-        public CosmosDBLease(string leaseConnectionString, string leaseDatabaseName, string leaseCollectionName, string leaseCollectionPrefix)
-        {
-            LeasesCosmosDBConnectionString = leaseConnectionString;
-            LeaseDatabaseName = leaseDatabaseName;
-            LeaseCollectionName = leaseCollectionName;
-            LeaseCollectionPrefix = leaseCollectionPrefix;
+            LeasesCosmosDBConnectionString = leaseConnectionString ?? throw new ArgumentNullException(nameof(leaseConnectionString));
+            LeaseDatabaseName = leaseDatabaseName ?? throw new ArgumentNullException(nameof(leaseDatabaseName));
+            LeaseCollectionName = leaseCollectionName ?? throw new ArgumentNullException(nameof(LeaseCollectionName));
         }
     }
 }

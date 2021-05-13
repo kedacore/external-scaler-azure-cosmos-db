@@ -1,4 +1,6 @@
-﻿namespace Keda.CosmosDB.Scaler.Services
+﻿using System;
+
+namespace Keda.CosmosDB.Scaler.Services
 {
     public class CosmosDBTrigger
     {
@@ -10,10 +12,10 @@
 
         public CosmosDBTrigger(string connectionString, string databaseName, string collectionName, string accountName)
         {
-            CosmosDBConnectionString = connectionString;
-            DatabaseName = databaseName;
-            CollectionName = collectionName;
-            AccountName = accountName;
+            CosmosDBConnectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+            DatabaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
+            CollectionName = collectionName ?? throw new ArgumentNullException(nameof(collectionName));
+            AccountName = accountName ?? throw new ArgumentNullException(nameof(accountName));
         }
     }
 }

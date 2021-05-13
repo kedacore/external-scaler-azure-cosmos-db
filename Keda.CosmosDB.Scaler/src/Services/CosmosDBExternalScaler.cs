@@ -75,12 +75,9 @@ namespace Keda.CosmosDB.Scaler.Services
             var trigger = new CosmosDBTrigger(scalerMetadata[Constants.ConnectionStringMetadata],
                 scalerMetadata[Constants.DatabaseNameMetadata], scalerMetadata[Constants.CollectionNameMetadata], string.Empty);
 
-            trigger.Lease = new CosmosDBLease()
-            {
-                LeasesCosmosDBConnectionString = scalerMetadata[Constants.LeasesConnectionStringMetadata],
-                LeaseDatabaseName = scalerMetadata[Constants.LeaseDatabaseNameMetadata],
-                LeaseCollectionName = scalerMetadata[Constants.LeaseCollectionNameMetadata]
-            };
+            trigger.Lease = new CosmosDBLease(scalerMetadata[Constants.LeasesConnectionStringMetadata],
+                scalerMetadata[Constants.LeaseDatabaseNameMetadata],
+                scalerMetadata[Constants.LeaseCollectionNameMetadata]);
 
             if (scalerMetadata.TryGetValue(Constants.AccountNameMetadata, out string accountName))
             {

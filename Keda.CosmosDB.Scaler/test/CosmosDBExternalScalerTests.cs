@@ -74,7 +74,7 @@ namespace Keda.CosmosDB.Scaler.UnitTest
 
         private static CosmosDBLease CreateTestLease()
         {
-            return new CosmosDBLease("leaseConnection", "leaseDB", "leaseCollection", "leaseCollectionPrefix");
+            return new CosmosDBLease("leaseConnection", "leaseDB", "leaseCollection");
         }
 
         private static CosmosDBTrigger CreateTestTrigger()
