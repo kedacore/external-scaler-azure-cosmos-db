@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Ask a question or get support
-    url: https://github.com/kedacore/{repo-name}/discussions/new
+    url: https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/discussions/new
     about: Ask a question or request support for using KEDA

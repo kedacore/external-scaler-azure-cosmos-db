@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Keda.CosmosDbScaler.Processor": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
