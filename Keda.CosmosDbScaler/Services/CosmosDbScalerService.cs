@@ -22,7 +22,7 @@ namespace Keda.CosmosDbScaler
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
         {
-            bool isActive = (await GetRemainingWorkAsync(request.ScalerMetadata)) > 0L;
+            bool isActive = (await GetPartitionCountAsync(request)) > 0L;
             return new IsActiveResponse { Result = isActive };
         }
 
@@ -32,8 +32,8 @@ namespace Keda.CosmosDbScaler
 
             response.MetricValues.Add(new MetricValue
             {
-                MetricName = "cosmos-remaining-work",
-                MetricValue_ = await GetRemainingWorkAsync(request.ScaledObjectRef.ScalerMetadata),
+                MetricName = "cosmos-partition-count",
+                MetricValue_ = await GetPartitionCountAsync(request.ScaledObjectRef),
             });
 
             return response;
@@ -45,64 +45,55 @@ namespace Keda.CosmosDbScaler
 
             response.MetricSpecs.Add(new MetricSpec
             {
-                MetricName = "cosmos-remaining-work", // TODO: Check name and uniqueness requirements.
-                TargetSize = 1L, // TODO: Understand why this should equal 1 (it seems to be 1000 in WebJobs SDK).
+                MetricName = "cosmos-partition-count", // TODO: Check name and uniqueness requirements.
+                TargetSize = 1L,
             });
 
             return Task.FromResult(response);
         }
 
-        private async Task<long> GetRemainingWorkAsync(MapField<string, string> scalerMetadata)
+        private async Task<long> GetPartitionCountAsync(ScaledObjectRef scaledObjectRef)
         {
-            _logger.LogInformation($"TEST: Creating monitored client: {scalerMetadata["connection"]}");
+            var scalerMetadata = ScalerMetadata.Create(scaledObjectRef);
 
             // TODO: Check if gateway mode is necessary: https://docs.microsoft.com/en-us/azure/cosmos-db/sql-sdk-connection-modes.
             CosmosClient monitoredClient = new CosmosClient(
-                scalerMetadata["connection"],
+                scalerMetadata.Connection,
                 new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
 
             CosmosClient leaseClient;
-            if (scalerMetadata["leaseConnection"].Equals(scalerMetadata["connection"], StringComparison.OrdinalIgnoreCase))
+            if (scalerMetadata.LeaseConnection == scalerMetadata.Connection)
             {
                 leaseClient = monitoredClient;
             }
             else
             {
-                _logger.LogInformation($"TEST: Creating lease client: {scalerMetadata["connection"]}");
-
                 leaseClient = new CosmosClient(
-                    scalerMetadata["leaseConnection"],
+                    scalerMetadata.LeaseConnection,
                     new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
             }
 
-            Container monitoredContainer = monitoredClient.GetContainer(scalerMetadata["databaseId"], scalerMetadata["containerId"]);
-            Container leaseContainer = leaseClient.GetContainer(scalerMetadata["leaseDatabaseId"], scalerMetadata["leaseContainerId"]);
+            Container monitoredContainer = monitoredClient.GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId);
+            Container leaseContainer = leaseClient.GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
 
-            // TODO: Check if estimator instances need caching.
             // TODO: Check behavior when an exception is thrown.
-            // TODO: Check if logging works.
             try
             {
-                _logger.LogInformation($"TEST: Creating estimator: {scalerMetadata["processorName"]}");
+                ChangeFeedEstimator estimator = monitoredContainer.GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
 
-                List<ChangeFeedProcessorState> partitionWorkList = new List<ChangeFeedProcessorState>();
-                ChangeFeedEstimator estimator = monitoredContainer.GetChangeFeedEstimator(scalerMetadata["processorName"], leaseContainer);
+                // It does not help by creating more change-feed processing instances than the number of partitions.
+                int partitionCount = 0;
 
                 using (FeedIterator<ChangeFeedProcessorState> iterator = estimator.GetCurrentStateIterator())
                 {
                     while (iterator.HasMoreResults)
                     {
                         FeedResponse<ChangeFeedProcessorState> states = await iterator.ReadNextAsync();
-                        partitionWorkList.AddRange(states);
+                        partitionCount += states.Where(state => state.EstimatedLag > 0).Count();
                     }
                 }
 
-                _logger.LogInformation($"TEST: Partition count: {partitionWorkList.Count}");
-                _logger.LogInformation($"TEST: Estimated items: {partitionWorkList.Sum(item => item.EstimatedLag)}");
-
-                // Return sum of "approximations of the difference between the last processed item in the feed container
-                // and the latest change recorded" across all processor instances.
-                return partitionWorkList.Sum(item => item.EstimatedLag);
+                return partitionCount;
             }
             catch (CosmosException exception)
             {
