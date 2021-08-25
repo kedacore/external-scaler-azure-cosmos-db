@@ -40,30 +40,6 @@ spec:
 
 ---
 
-# Deploy order processor application.
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cosmos-db-order-processor
-  namespace: default
-spec:
-  replicas: 0
-  selector:
-    matchLabels:
-      app: cosmos-db-order-processor
-  template:
-    metadata:
-      labels:
-        app: cosmos-db-order-processor
-    spec:
-      containers:
-      - image: jatinsanghvi/cosmos-db-order-processor:latest
-        imagePullPolicy: Always
-        name: cosmos-db-order-processor
-
----
-
 # Create KEDA scaled object to scale order processor application.
 
 apiVersion: keda.sh/v1alpha1

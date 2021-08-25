@@ -1,39 +1,43 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Google.Protobuf.Collections;
 using Grpc.Core;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.CosmosDbScaler
 {
-    public class CosmosDbScalerService : ExternalScaler.ExternalScalerBase
+    internal sealed class CosmosDbScalerService : ExternalScaler.ExternalScalerBase
     {
+        private readonly CosmosClientFactory _factory;
         private readonly ILogger<CosmosDbScalerService> _logger;
 
-        public CosmosDbScalerService(ILogger<CosmosDbScalerService> logger)
+        public CosmosDbScalerService(CosmosClientFactory factory, ILogger<CosmosDbScalerService> logger)
         {
-            _logger = logger;
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
         {
-            bool isActive = (await GetPartitionCountAsync(request)) > 0L;
+            var scalerMetadata = ScalerMetadata.Create(request);
+
+            bool isActive = (await GetPartitionCountAsync(scalerMetadata)) > 0L;
             return new IsActiveResponse { Result = isActive };
         }
 
         public override async Task<GetMetricsResponse> GetMetrics(GetMetricsRequest request, ServerCallContext context)
         {
+            var scalerMetadata = ScalerMetadata.Create(request.ScaledObjectRef);
+
             var response = new GetMetricsResponse();
 
             response.MetricValues.Add(new MetricValue
             {
-                MetricName = "cosmos-partition-count",
-                MetricValue_ = await GetPartitionCountAsync(request.ScaledObjectRef),
+                MetricName = scalerMetadata.MetricName,
+                MetricValue_ = await GetPartitionCountAsync(scalerMetadata),
             });
 
             return response;
@@ -41,45 +45,31 @@ namespace Keda.CosmosDbScaler
 
         public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
         {
+            var scalerMetadata = ScalerMetadata.Create(request);
+
             var response = new GetMetricSpecResponse();
 
             response.MetricSpecs.Add(new MetricSpec
             {
-                MetricName = "cosmos-partition-count", // TODO: Check name and uniqueness requirements.
+                MetricName = scalerMetadata.MetricName,
                 TargetSize = 1L,
             });
 
             return Task.FromResult(response);
         }
 
-        private async Task<long> GetPartitionCountAsync(ScaledObjectRef scaledObjectRef)
+        private async Task<long> GetPartitionCountAsync(ScalerMetadata scalerMetadata)
         {
-            var scalerMetadata = ScalerMetadata.Create(scaledObjectRef);
-
-            // TODO: Check if gateway mode is necessary: https://docs.microsoft.com/en-us/azure/cosmos-db/sql-sdk-connection-modes.
-            CosmosClient monitoredClient = new CosmosClient(
-                scalerMetadata.Connection,
-                new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
-
-            CosmosClient leaseClient;
-            if (scalerMetadata.LeaseConnection == scalerMetadata.Connection)
-            {
-                leaseClient = monitoredClient;
-            }
-            else
-            {
-                leaseClient = new CosmosClient(
-                    scalerMetadata.LeaseConnection,
-                    new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
-            }
-
-            Container monitoredContainer = monitoredClient.GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId);
-            Container leaseContainer = leaseClient.GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
-
-            // TODO: Check behavior when an exception is thrown.
             try
             {
-                ChangeFeedEstimator estimator = monitoredContainer.GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
+                Container leaseContainer = _factory
+                    .GetCosmosClient(scalerMetadata.LeaseConnection)
+                    .GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
+
+                ChangeFeedEstimator estimator = _factory
+                    .GetCosmosClient(scalerMetadata.Connection)
+                    .GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId)
+                    .GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
 
                 // It does not help by creating more change-feed processing instances than the number of partitions.
                 int partitionCount = 0;

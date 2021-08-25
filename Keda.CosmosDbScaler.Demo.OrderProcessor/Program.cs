@@ -13,7 +13,7 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureLogging(builder => builder.AddConsole(options => options.TimestampFormat = "HH:mm:ss "))
+                .ConfigureLogging(builder => builder.AddConsole(options => options.TimestampFormat = "yyyy-MM-dd HH:mm:ss "))
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHostedService<Worker>();

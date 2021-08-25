@@ -1,0 +1,21 @@
+# Deploy order processor application.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-db-order-processor
+  namespace: default
+spec:
+  replicas: 1 # A replica is required to create change-feed.
+  selector:
+    matchLabels:
+      app: cosmos-db-order-processor
+  template:
+    metadata:
+      labels:
+        app: cosmos-db-order-processor
+    spec:
+      containers:
+      - image: jatinsanghvi/cosmos-db-order-processor:latest
+        imagePullPolicy: Always
+        name: cosmos-db-order-processor
