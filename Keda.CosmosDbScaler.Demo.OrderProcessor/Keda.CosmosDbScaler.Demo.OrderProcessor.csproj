@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <!-- <UserSecretsId>dotnet-Keda.CosmosDbScaler.Processor-C66257A3-1D93-4B37-9B86-2A055120998C</UserSecretsId> -->
   </PropertyGroup>
 
   <ItemGroup>

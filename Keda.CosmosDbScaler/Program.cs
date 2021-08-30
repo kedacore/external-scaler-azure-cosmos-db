@@ -22,7 +22,7 @@ namespace Keda.CosmosDbScaler
                     webBuilder.ConfigureKestrel(kestrelServerOptions =>
                     {
                         // Setup a HTTP/2 endpoint without TLS.
-                        kestrelServerOptions.ListenAnyIP(4050, listOptions => listOptions.Protocols = HttpProtocols.Http2);
+                        kestrelServerOptions.ListenAnyIP(port: 4050, listOptions => listOptions.Protocols = HttpProtocols.Http2);
                     });
 
                     webBuilder.UseStartup<Startup>();

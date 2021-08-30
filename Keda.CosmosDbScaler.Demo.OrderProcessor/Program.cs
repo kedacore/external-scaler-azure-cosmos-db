@@ -1,3 +1,4 @@
+using Keda.CosmosDbScaler.Demo.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHostedService<Worker>();
+                    services.AddSingleton(CosmosDbConfig.Create(hostContext.Configuration));
                 });
     }
 }

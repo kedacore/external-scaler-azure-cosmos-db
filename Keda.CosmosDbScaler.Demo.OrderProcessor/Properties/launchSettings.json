@@ -1,6 +1,6 @@
 ﻿{
   "profiles": {
-    "Keda.CosmosDbScaler.Processor": {
+    "Keda.CosmosDbScaler.Demo.OrderProcessor": {
       "commandName": "Project",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"

@@ -12,30 +12,34 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
 {
     internal sealed class Worker : BackgroundService
     {
+        private readonly CosmosDbConfig _cosmosDbConfig;
         private readonly ILogger<Worker> _logger;
 
         private ChangeFeedProcessor _processor;
 
-        public Worker(ILogger<Worker> logger)
+        public Worker(CosmosDbConfig cosmosDbConfig, ILogger<Worker> logger)
         {
-            _logger = logger;
+            _cosmosDbConfig = cosmosDbConfig ?? throw new ArgumentNullException(nameof(cosmosDbConfig));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override async Task StartAsync(CancellationToken stoppingToken)
         {
-            Container leaseContainer = await new CosmosClient(AssetInfo.LeaseConnection)
-                .GetDatabase(AssetInfo.LeaseDatabaseId)
+            Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
+                .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId);
+
+            Container leaseContainer = await leaseDatabase
                 .CreateContainerIfNotExistsAsync(
-                    containerProperties: new ContainerProperties(AssetInfo.LeaseContainerId, "/id"),
+                    new ContainerProperties(_cosmosDbConfig.LeaseContainerId, partitionKeyPath: "/id"),
                     throughput: 400);
 
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
-            _processor = new CosmosClient(AssetInfo.Connection)
-                .GetDatabase(AssetInfo.DatabaseId)
-                .GetContainer(AssetInfo.ContainerId)
-                .GetChangeFeedProcessorBuilder<Order>(AssetInfo.ProcessorName, ProcessOrdersAsync)
+            _processor = new CosmosClient(_cosmosDbConfig.Connection)
+                .GetDatabase(_cosmosDbConfig.DatabaseId)
+                .GetContainer(_cosmosDbConfig.ContainerId)
+                .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)
                 .WithLeaseContainer(leaseContainer)
                 .Build();

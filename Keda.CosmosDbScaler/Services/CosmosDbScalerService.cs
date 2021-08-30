@@ -11,12 +11,12 @@ namespace Keda.CosmosDbScaler
 {
     internal sealed class CosmosDbScalerService : ExternalScaler.ExternalScalerBase
     {
-        private readonly CosmosClientFactory _factory;
+        private readonly CosmosDbFactory _cosmosDbFactory;
         private readonly ILogger<CosmosDbScalerService> _logger;
 
-        public CosmosDbScalerService(CosmosClientFactory factory, ILogger<CosmosDbScalerService> logger)
+        public CosmosDbScalerService(CosmosDbFactory cosmosDbFactory, ILogger<CosmosDbScalerService> logger)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _cosmosDbFactory = cosmosDbFactory ?? throw new ArgumentNullException(nameof(cosmosDbFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -62,11 +62,11 @@ namespace Keda.CosmosDbScaler
         {
             try
             {
-                Container leaseContainer = _factory
+                Container leaseContainer = _cosmosDbFactory
                     .GetCosmosClient(scalerMetadata.LeaseConnection)
                     .GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
 
-                ChangeFeedEstimator estimator = _factory
+                ChangeFeedEstimator estimator = _cosmosDbFactory
                     .GetCosmosClient(scalerMetadata.Connection)
                     .GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId)
                     .GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);

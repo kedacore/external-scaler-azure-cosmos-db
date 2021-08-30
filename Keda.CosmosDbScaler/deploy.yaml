@@ -3,62 +3,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cosmos-db-scaler
+  name: cosmosdb-scaler
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cosmos-db-scaler
+      app: cosmosdb-scaler
   template:
     metadata:
       labels:
-        app: cosmos-db-scaler
+        app: cosmosdb-scaler
     spec:
       containers:
-      - image: jatinsanghvi/cosmos-db-scaler:latest
-        imagePullPolicy: Always
-        name: cosmos-db-scaler
-        ports:
-        - containerPort: 4050
+        - image: jatinsanghvi/cosmosdb-scaler:latest
+          imagePullPolicy: Always
+          name: cosmosdb-scaler
+          ports:
+            - containerPort: 4050
 
 ---
-
 # Assign hostname to the scaler application.
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: cosmos-db-scaler
+  name: cosmosdb-scaler
   namespace: default
 spec:
   ports:
-  - port: 4050
-    targetPort: 4050
+    - port: 4050
+      targetPort: 4050
   selector:
-    app: cosmos-db-scaler
-
----
-
-# Create KEDA scaled object to scale order processor application.
-
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: cosmos-db-order-processor
-  namespace: default
-spec:
-  pollingInterval: 20
-  scaleTargetRef:
-    name: cosmos-db-order-processor
-  triggers:
-    - type: external
-      metadata:
-        scalerAddress: cosmos-db-scaler.default:4050
-        connection: <redacted>
-        databaseId: StoreDatabase
-        containerId: OrderContainer
-        leaseConnection: <redacted>
-        leaseDatabaseId: StoreDatabase
-        leaseContainerId: OrderProcessorLeases
-        processorName: OrderProcessor
+    app: cosmosdb-scaler

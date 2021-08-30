@@ -13,7 +13,7 @@ namespace Keda.CosmosDbScaler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
-            services.AddSingleton<CosmosClientFactory>();
+            services.AddSingleton<CosmosDbFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
