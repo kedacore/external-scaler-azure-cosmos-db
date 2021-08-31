@@ -1,7 +1,11 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")] // Required by mock generator.
+[assembly: InternalsVisibleTo("Keda.CosmosDbScaler.Tests")]
 
 namespace Keda.CosmosDbScaler
 {
