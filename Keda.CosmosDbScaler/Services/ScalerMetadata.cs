@@ -7,6 +7,8 @@ namespace Keda.CosmosDbScaler
     [JsonObject(ItemRequired = Required.Always)]
     internal sealed class ScalerMetadata
     {
+        private string _metricName;
+
         public string Connection { get; set; }
         public string DatabaseId { get; set; }
         public string ContainerId { get; set; }
@@ -15,20 +17,24 @@ namespace Keda.CosmosDbScaler
         public string LeaseContainerId { get; set; }
         public string ProcessorName { get; set; }
 
-        // [JsonProperty(Required = Required.Default)]
-        // public string MetricName { get; set; }
-
-        [JsonIgnore]
+        [JsonProperty(Required = Required.DisallowNull)]
         public string MetricName
         {
             get
             {
-                string metricName =
-                    $"cosmosdb-partitioncount-{this.LeaseAccountHost}-{this.LeaseDatabaseId}-{this.LeaseContainerId}-{this.ProcessorName}";
+                if (_metricName == null)
+                {
+                    // Normalize metric name.
+                    _metricName =
+                        $"cosmosdb-partitioncount-{this.LeaseAccountHost}-{this.LeaseDatabaseId}-{this.LeaseContainerId}-{this.ProcessorName}"
+                        .Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-")
+                        .ToLower();
+                }
 
-                // Normalize metric name.
-                return metricName.Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-").ToLower();
+                return _metricName;
             }
+
+            set => _metricName = value;
         }
 
         [JsonIgnore]
