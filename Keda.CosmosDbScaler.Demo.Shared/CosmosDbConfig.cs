@@ -7,6 +7,8 @@ namespace Keda.CosmosDbScaler.Demo.Shared
         public string Connection { get; set; }
         public string DatabaseId { get; set; }
         public string ContainerId { get; set; }
+        public int ContainerThroughput { get; set; }
+
         public string LeaseConnection { get; set; }
         public string LeaseDatabaseId { get; set; }
         public string LeaseContainerId { get; set; }

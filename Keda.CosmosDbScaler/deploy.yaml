@@ -16,7 +16,7 @@ spec:
         app: cosmosdb-scaler
     spec:
       containers:
-        - image: jatinsanghvi/cosmosdb-scaler:latest
+        - image: <docker-id>/cosmosdb-scaler:latest
           imagePullPolicy: Always
           name: cosmosdb-scaler
           ports:

@@ -1,15 +1,3 @@
-# Secrets used by order processor application.
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cosmosdb-order-processor-secret
-  namespace: default
-data:
-  CosmosDbConfig__Connection: <base64-encoded-connection-string-of-monitored-container-account>
-  CosmosDbConfig__LeaseConnection: <base64-encoded-connection-string-of-lease-container-account>
-
----
 # Deploy order processor application.
 
 apiVersion: apps/v1
@@ -28,32 +16,11 @@ spec:
         app: cosmosdb-order-processor
     spec:
       containers:
-        - envFrom:
-            - secretRef:
-                name: cosmosdb-order-processor-secret
-          image: jatinsanghvi/cosmosdb-order-processor:latest
+        - name: cosmosdb-order-processor
+          image: <docker-id>/cosmosdb-order-processor:latest
           imagePullPolicy: Always
-          name: cosmosdb-order-processor
-
----
-# Create KEDA scaled object to scale order processor application.
-
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: cosmosdb-order-processor-scaledobject
-  namespace: default
-spec:
-  pollingInterval: 20
-  scaleTargetRef:
-    name: cosmosdb-order-processor
-  triggers:
-    - type: external
-      metadata:
-        scalerAddress: cosmosdb-scaler.default:4050
-        connection: <connection-string-of-monitored-container-account>
-        databaseId: StoreDatabase
-        containerId: OrderContainer
-        leaseConnection: <connection-string-of-lease-container-account>
-        leaseContainerId: OrderProcessorLeases
-        processorName: OrderProcessor
+          env:
+            - name: CosmosDbConfig__Connection
+              value: <connection-string-of-monitored-container>
+            - name: CosmosDbConfig__LeaseConnection
+              value: <connection-string-of-lease-container>

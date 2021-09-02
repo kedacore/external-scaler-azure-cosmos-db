@@ -9,7 +9,7 @@ namespace Keda.CosmosDbScaler.Demo.Shared
         public string Id { get; }
 
         public int Amount { get; set; }
-        public string ArticleNumber { get; set; }
+        public string Article { get; set; }
         public Customer Customer { get; set; }
 
         public Order()

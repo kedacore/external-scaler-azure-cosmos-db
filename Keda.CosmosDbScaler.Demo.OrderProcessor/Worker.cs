@@ -68,7 +68,9 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
 
             foreach (Order order in orders)
             {
-                _logger.LogInformation($"Processing order {order.Id} for {order.Amount} unit(s) of {order.ArticleNumber} bought by {order.Customer.FirstName} {order.Customer.LastName}");
+                _logger.LogInformation($"Processing order {order.Id} - {order.Amount} unit(s) of {order.Article} bought by {order.Customer.FirstName} {order.Customer.LastName}");
+
+                // Add delay to fake the time consumed in processing the order.
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
                 _logger.LogInformation($"Order {order.Id} processed");
             }

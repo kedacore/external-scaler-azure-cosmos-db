@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Bogus;
+using Bogus.DataSets;
 using Keda.CosmosDbScaler.Demo.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Hosting;
@@ -41,82 +42,88 @@ namespace Keda.CosmosDbScaler.Demo.OrderGenerator
 
         private static async Task GenerateAsync()
         {
-            Console.WriteLine("Let's queue some orders, how many do you want?");
-
-            int amount = ReadOrderAmount();
-            await CreateOrdersAsync(amount);
-
-            Console.WriteLine("That's it, see you later!");
+            int count = ReadOrderCount();
+            bool isSingleArticle = ReadIsSingleArticle();
+            await CreateOrdersAsync(count, isSingleArticle);
         }
 
-        private static int ReadOrderAmount()
+        private static int ReadOrderCount()
         {
-            int amount;
-
-            while (!int.TryParse(Console.ReadLine(), out amount) || amount < 1 || amount > 10000)
+            while (true)
             {
+                Console.Write("Let's queue some orders, how many do you want? ");
+
+                if (int.TryParse(Console.ReadLine(), out int count) && count >= 1 && count <= 10000)
+                {
+                    return count;
+                }
+
                 Console.WriteLine("That's not a valid amount. Please enter a number between 1 and 10000.");
             }
-
-            return amount;
         }
 
-        private static async Task CreateOrdersAsync(int amount)
+        private static bool ReadIsSingleArticle()
         {
+            Console.Write("Do you want to limit orders to single article (to put them in a single partition)? (Y/N) ");
+            bool isSingleArticle = Console.ReadKey().Key == ConsoleKey.Y;
+            Console.WriteLine();
+            return isSingleArticle;
+        }
 
-
+        private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
+        {
             Container container = new CosmosClient(_cosmosDbConfig.Connection)
                 .GetDatabase(_cosmosDbConfig.DatabaseId)
                 .GetContainer(_cosmosDbConfig.ContainerId);
 
-            int remainingAmount = amount;
+            int remainingCount = count;
+            string article = isSingleArticle ? new Commerce().Product() : null;
 
-            while (remainingAmount > 0)
+            while (remainingCount > 0)
             {
-                int newAmount = Math.Min(remainingAmount, 20);
+                // Do not push all orders together as that may cause requests to get throttled.
+                int newCount = Math.Min(remainingCount, 20);
 
-                Task[] createOrderTasks = Enumerable.Range(0, newAmount).Select(_ => CreateOrderAsync(container)).ToArray();
+                Task[] createOrderTasks = Enumerable.Range(0, newCount)
+                    .Select(_ => CreateOrderAsync(container, article))
+                    .ToArray();
 
                 await Task.WhenAll(createOrderTasks);
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
-                remainingAmount -= newAmount;
+                remainingCount -= newCount;
             }
+
+            Console.WriteLine("That's it, see you later!");
         }
 
-        private static async Task CreateOrderAsync(Container container)
+        private static async Task CreateOrderAsync(Container container, string article)
         {
-            var order = GenerateOrder();
-            Console.WriteLine($"Creating order {order.Id} - A {order.ArticleNumber} for {order.Customer.FirstName} {order.Customer.LastName}.");
-            await container.CreateItemAsync(order);
-        }
-
-        private static Order GenerateOrder()
-        {
-            var customerGenerator = new Faker<Customer>()
+            Customer customer = new Faker<Customer>()
                 .RuleFor(customer => customer.FirstName, faker => faker.Name.FirstName())
                 .RuleFor(customer => customer.LastName, faker => faker.Name.LastName());
 
-            var orderGenerator = new Faker<Order>()
-                .RuleFor(order => order.Customer, () => customerGenerator)
+            Order order = new Faker<Order>()
+                .RuleFor(order => order.Customer, () => customer)
                 .RuleFor(order => order.Amount, faker => faker.Random.Number(1, 10))
-                .RuleFor(order => order.ArticleNumber, faker => faker.Commerce.Product());
+                .RuleFor(order => order.Article, faker => article ?? faker.Commerce.Product());
 
-            return orderGenerator;
+            Console.WriteLine($"Creating order {order.Id} - {order.Amount} unit(s) of {order.Article} for {order.Customer.FirstName} {order.Customer.LastName}");
+            await container.CreateItemAsync(order);
         }
 
         private static async Task SetupAsync()
         {
-            Console.WriteLine($"Creating database {_cosmosDbConfig.DatabaseId}");
+            Console.WriteLine($"Creating database: {_cosmosDbConfig.DatabaseId}");
 
             Database database = await new CosmosClient(_cosmosDbConfig.Connection)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.DatabaseId);
 
-            Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId}");
+            Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId} with throughput: {_cosmosDbConfig.ContainerThroughput} RU/s");
 
             Container container = await database.CreateContainerIfNotExistsAsync(
-                new ContainerProperties(_cosmosDbConfig.ContainerId, partitionKeyPath: "/id"),
-                throughput: 400);
+                new ContainerProperties(_cosmosDbConfig.ContainerId, partitionKeyPath: $"/{nameof(Order.Article)}"),
+                throughput: _cosmosDbConfig.ContainerThroughput);
 
             Console.WriteLine("Done!");
         }
