@@ -1,5 +1,7 @@
 # KEDA External Scaler for Azure Cosmos DB
 
+[![Build Status](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions?query=branch%3Amain+workflow%3ABuild)
+
 This file guides you through the steps to deploy and use the KEDA external scaler for [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db/) service.
 
 The repository contains the source code for two sample projects to demonstrate the functionality of the external scaler.
