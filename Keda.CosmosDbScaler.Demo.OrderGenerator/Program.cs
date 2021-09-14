@@ -73,8 +73,7 @@ namespace Keda.CosmosDbScaler.Demo.OrderGenerator
         private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
         {
             Container container = new CosmosClient(_cosmosDbConfig.Connection)
-                .GetDatabase(_cosmosDbConfig.DatabaseId)
-                .GetContainer(_cosmosDbConfig.ContainerId);
+                .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId);
 
             int remainingCount = count;
             string article = isSingleArticle ? new Commerce().Product() : null;

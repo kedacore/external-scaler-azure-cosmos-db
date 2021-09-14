@@ -37,8 +37,7 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
             _processor = new CosmosClient(_cosmosDbConfig.Connection)
-                .GetDatabase(_cosmosDbConfig.DatabaseId)
-                .GetContainer(_cosmosDbConfig.ContainerId)
+                .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)
                 .WithLeaseContainer(leaseContainer)
@@ -64,7 +63,6 @@ namespace Keda.CosmosDbScaler.Demo.OrderProcessor
         private async Task ProcessOrdersAsync(IReadOnlyCollection<Order> orders, CancellationToken cancellationToken)
         {
             _logger.LogInformation(orders.Count + " orders received");
-            var tasks = new List<Task>();
 
             foreach (Order order in orders)
             {
