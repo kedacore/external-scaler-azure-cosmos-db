@@ -1,0 +1,53 @@
+name: Pull request build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  VERSION_TAG: experimental
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet environment
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test --no-restore
+
+      - name: Build Docker image for order-generator
+        uses: docker/build-push-action@v2
+        with:
+          file: ./Scaler.Demo/OrderGenerator/Dockerfile
+          tags: cosmosdb-order-generator:${{ env.VERSION_TAG }}
+
+      - name: Build Docker image for order-processor
+        uses: docker/build-push-action@v2
+        with:
+          file: ./Scaler.Demo/OrderProcessor/Dockerfile
+          tags: cosmosdb-order-processor:${{ env.VERSION_TAG }}
+
+      - name: Build Docker image for scaler
+        uses: docker/build-push-action@v2
+        with:
+          file: ./Scaler/Dockerfile
+          tags: cosmosdb-scaler:${{ env.VERSION_TAG }}
