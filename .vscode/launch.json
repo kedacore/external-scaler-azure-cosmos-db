@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Keda.CosmosDbScaler/bin/Debug/netcoreapp3.1/Keda.CosmosDbScaler.dll",
+            "program": "${workspaceFolder}/src/Scaler/bin/Debug/netcoreapp3.1/Keda.CosmosDb.Scaler.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Keda.CosmosDbScaler",
+            "cwd": "${workspaceFolder}/src/Scaler",
             "stopAtEntry": false,
             // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
             "serverReadyAction": {

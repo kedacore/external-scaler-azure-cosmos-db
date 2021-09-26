@@ -1,0 +1,46 @@
+# Create namespace if not present.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keda
+
+---
+# Deploy KEDA external scaler for Azure Cosmos DB.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keda-cosmosdb-scaler
+  namespace: keda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keda-cosmosdb-scaler
+  template:
+    metadata:
+      labels:
+        app: keda-cosmosdb-scaler
+    spec:
+      containers:
+        - image: ghcr.io/kedacore/keda-external-scaler-azure-cosmos-db:experimental
+          imagePullPolicy: Always
+          name: keda-cosmosdb-scaler
+          ports:
+            - containerPort: 4050
+
+---
+# Assign hostname to the scaler application.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: keda-cosmosdb-scaler
+  namespace: keda
+spec:
+  ports:
+    - port: 4050
+      targetPort: 4050
+  selector:
+    app: keda-cosmosdb-scaler

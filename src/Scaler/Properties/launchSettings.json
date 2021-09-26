@@ -1,0 +1,13 @@
+﻿{
+  "profiles": {
+    "Keda.CosmosDb.Scaler": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:4050",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
