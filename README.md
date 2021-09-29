@@ -2,7 +2,7 @@
 
 Scale applications based on changes to [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db/) container data.
 
-[![Build Status](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions/workflows/main-build.yml/badge.svg?branch=main)](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions?query=branch%3Amain+workflow%3A"Main+Branch+Build")
+[![Build Status](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions/workflows/main-build.yml/badge.svg?branch=main)](https://github.com/kedacore/keda-external-scaler-azure-cosmos-db/actions?query=workflow%3A"Main+Branch+Build")
 
 ## Architecture
 
