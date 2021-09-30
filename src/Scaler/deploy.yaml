@@ -1,0 +1,38 @@
+# Deploy KEDA external scaler for Azure Cosmos DB.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmosdb-scaler
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmosdb-scaler
+  template:
+    metadata:
+      labels:
+        app: cosmosdb-scaler
+    spec:
+      containers:
+        - image: <docker-id>/cosmosdb-scaler:latest
+          imagePullPolicy: Always
+          name: cosmosdb-scaler
+          ports:
+            - containerPort: 4050
+
+---
+# Assign hostname to the scaler application.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cosmosdb-scaler
+  namespace: default
+spec:
+  ports:
+    - port: 4050
+      targetPort: 4050
+  selector:
+    app: cosmosdb-scaler
