@@ -64,10 +64,23 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
 
         private static bool ReadIsSingleArticle()
         {
-            Console.Write("Do you want to limit orders to single article (to put them in a single partition)? (Y/N) ");
-            bool isSingleArticle = Console.ReadKey().Key == ConsoleKey.Y;
-            Console.WriteLine();
-            return isSingleArticle;
+            bool? isSingleArticle = null;
+
+            while (isSingleArticle == null)
+            {
+                Console.Write("Do you want to limit orders to single article (to put them in a single partition)? (Y/N) ");
+
+                isSingleArticle = Console.ReadKey().Key switch
+                {
+                    ConsoleKey.Y => true,
+                    ConsoleKey.N => false,
+                    _ => null,
+                };
+
+                Console.WriteLine();
+            }
+
+            return isSingleArticle.Value;
         }
 
         private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
