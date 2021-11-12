@@ -16,7 +16,7 @@ Following diagram shows the different components that are involved for achieving
 
 - **KEDA** - KEDA runs as a separate service in Kubernetes cluster. It enables auto-scaling of applications based on internal and more primarily, external events. Check [KEDA documentation](https://keda.sh/docs/concepts/) to learn more.
 
-- **External Scaler** - KEDA offers a host of out-of-the-box scalers. It also provides support for [external scalers](https://keda.sh/docs/scalers/external/). In this scheme, KEDA will query an external service to fetch the metric specs and live metrics of an event, and will scale the applications accordingly. This is where 'KEDA external scaler for Azure Cosmos DB' plugs itself in. For information on how an external scaler can be implemented, check [KEDA external scaler concept](https://keda.sh/docs/concepts/external-scalers/).
+- **External Scaler** - While KEDA ships with a set of [built-in scalers](https://keda.sh/docs/scalers/), it also allows users to extend KEDA through support for [external scalers](https://keda.sh/docs/scalers/external/). In this scheme, KEDA will query user's GRPC service to fetch  metrics of an event source, and will scale the applications accordingly. This is wheres 'KEDA external scaler for Azure Cosmos DB' plugs itself in. For information on how an external scaler can be implemented, check [KEDA external scaler concept](https://keda.sh/docs/concepts/external-scalers/).
 
 - **Listener Application(s)** - This represents the application `Deployment` or `StatefulSet` that you would like to scale in and out using KEDA and the external scaler. For information on how to setup the change feed processor in your application that processes changes in Cosmos DB container, read documentation on [change feed processing](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor).
 
@@ -27,6 +27,8 @@ The external scaler calls Cosmos DB APIs to estimate the amount of changes pendi
 > **Note:** The architectural diagram above shows KEDA, external scaler and the target application in different Kubernetes namespaces. This is possible but not necessary. It is a requirement though that the `ScaledObject` and the application `Deployment` reside in the same namespace.
 
 ## Setup Instructions
+
+> :warning: **Caution:** The scaler uses [.NET SDK Version 3](https://github.com/Azure/azure-cosmos-dotnet-v3) client library to estimate pending changes inside the change feeds. This library uses a different ID-naming scheme than its predecessors when creating and processing lease documents inside the lease container. This makes it incompatible with the deprecated [.NET SDK Version 2](https://github.com/Azure/azure-cosmos-dotnet-v2) and currently available [Java SDK](https://github.com/Azure/azure-cosmosdb-java) libraries. If you used one of the latter libraries to create the change feed processor, the external scaler would to unable to detect pending items and may scale down your application to `minReplicaCount` as defined in the `ScaledObject`.
 
 ### Deploy KEDA
 
@@ -41,10 +43,6 @@ Before applying the configuration, please update the image path in the YAML file
 ```text
 kubectl apply filename=deploy/deploy.yaml
 ```
-
-### Deploy Application
-
-Create the `Deployment` or `StatefulSet` resource for your application that would be processing the changes to the Cosmos DB container, and that needs to be scaled with help of KEDA and the external scaler.
 
 ### Create `ScaledObject` Resource
 
