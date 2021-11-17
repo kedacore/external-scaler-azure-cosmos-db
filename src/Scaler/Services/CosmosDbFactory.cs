@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Concurrent;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Logging;
 
 namespace Keda.CosmosDb.Scaler
 {

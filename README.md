@@ -28,7 +28,7 @@ The external scaler calls Cosmos DB APIs to estimate the amount of changes pendi
 
 ## Setup Instructions
 
-> :warning: **Caution:** The scaler uses [.NET SDK Version 3](https://github.com/Azure/azure-cosmos-dotnet-v3) client library to estimate pending changes inside the change feeds. This library uses a different ID-naming scheme than its predecessors when creating and processing lease documents inside the lease container. This makes it incompatible with the deprecated [.NET SDK Version 2](https://github.com/Azure/azure-cosmos-dotnet-v2) and currently available [Java SDK](https://github.com/Azure/azure-cosmosdb-java) libraries. If you used one of the latter libraries to create the change feed processor, the external scaler would to unable to detect pending items and may scale down your application to `minReplicaCount` as defined in the `ScaledObject`.
+> :warning: **Caution:** The [Java SDK v2](https://github.com/Azure/azure-cosmosdb-java) client library uses a different naming convention for lease documents inside the lease container. This makes it incompatible with [.NET SDK v3](https://github.com/Azure/azure-cosmos-dotnet-v3), the one that the external scaler depends on to estimate the pending changes on change feeds. Hence, if you have a Java-based target consumer application, your change feeds would be having lease documents with incompatible IDs, and the external scaler would be unable to detect any pending change remaining to be consumed. Consequently, it will scale down your application to `minReplicaCount` if defined in the `ScaledObject` or to zero instances.
 
 ### Deploy KEDA
 
