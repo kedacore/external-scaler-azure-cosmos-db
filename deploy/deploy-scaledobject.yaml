@@ -12,7 +12,7 @@ spec:
   triggers:
     - type: external
       metadata:
-        scalerAddress: keda-cosmosdb-scaler.keda:4050
+        scalerAddress: external-scaler-azure-cosmos-db.keda:4050
         connection: <connection-string-of-monitored-container-account>
         databaseId: <database-id>
         containerId: <container-id>

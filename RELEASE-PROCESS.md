@@ -4,7 +4,7 @@ The release process of a new version of KEDA external scaler for Azure Cosmos DB
 
 ## 1. Choose release title and tag name
 
-Check the latest release on [Releases](https://github.com/kedacore/external-scaler-azure-cosmos-db/releases) page. Follow the [Semantic Versioning](https://semver.org/) guidelines for naming the new release. For instance, suppose that the latest release is **Version 1.2.3**, and that the next release is going to be a MINOR update, then its title would be **Version 1.3.0** and the associated tag name would be `v1.3.0`.
+Check the latest release on [Releases](https://github.com/kedacore/external-scaler-azure-cosmos-db/releases) page. Follow the [Semantic Versioning](https://semver.org/) guidelines for naming the new release. For instance, suppose that the latest release is **v1.2.3**, and that the next release is going to be a MINOR update, then its title would be **v1.3.0** and the associated tag name would be `v1.3.0`.
 
 ## 2. Create GitHub release
 
@@ -14,7 +14,7 @@ Publish the release. This will trigger GitHub action to create a new Docker imag
 
 ## 3. Update Helm Chart
 
-Once the GitHub release is created, update the Helm Chart for the external scaler in [kedacore/charts](https://github.com/kedacore/charts/tree/master/cosmosdb-scaler) repository. Depending on the changes that went in the release, this might just take updating the `version` and `appVersion` in [Chart.yaml](https://github.com/kedacore/charts/blob/master/cosmosdb-scaler/Chart.yaml) file, or in some cases, might involve adding and updating multiple template files.
+Once the GitHub release is created, update the Helm Chart for the external scaler in [kedacore/charts](https://github.com/kedacore/charts/tree/master/external-scaler-azure-cosmos-db) repository. Depending on the changes that went in the release, this might just take updating the `version` and `appVersion` in [Chart.yaml](https://github.com/kedacore/charts/tree/master/external-scaler-azure-cosmos-db/Chart.yaml) file, or in some cases, might involve adding and updating multiple template files.
 
 Follow the [Contributing](https://github.com/kedacore/charts/blob/master/CONTRIBUTING.md) guide to create a pull request. After the pull request is completed, create a GitHub release in the repository following the same guide.
 

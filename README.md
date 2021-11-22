@@ -1,6 +1,6 @@
 # KEDA External Scaler for Azure Cosmos DB
 
-Scale applications based on changes to [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db/) container data.
+Event-based autoscaler for your [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db/) change feed consumer applications running inside Kubernetes cluster.
 
 [![Build Status](https://github.com/kedacore/external-scaler-azure-cosmos-db/actions/workflows/main-build.yml/badge.svg?branch=main)](https://github.com/kedacore/external-scaler-azure-cosmos-db/actions?query=workflow%3A"Main+branch+build")
 
@@ -12,11 +12,11 @@ Following diagram shows the different components that are involved for achieving
 
 - **Monitored Container** - The Azure Cosmos DB container that the application needs to monitor for new changes. A Cosmos DB container might contain several logical partitions based on the presence of distinct values of partition keys. Different logical partitions will be grouped under the same **Partition Range** if they are stored on the same physical partition. For more information, please read the documentation on [partitioning overview](https://docs.microsoft.com/azure/cosmos-db/partitioning-overview). In general, for containers that do not contain large amount of data, the count of physical partitions does not exceed 1.
 
-- **Lease Container** - Another Azure Cosmos DB container that keeps track of changes happening on the monitored container. It stores the list of changes in the **Change Feed**. The [change feed design pattern](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-design-patterns) supports multiple parallel listeners by keeping independent feeds for each partition range. The listener application instances acquire leases on these individual feeds before processing them. This ensures that a change is not processed by multiple applications. You may have both monitored and lease containers in the same Cosmos DB account, but they can also be situated in different  accounts.
+- **Lease Container** - Another Azure Cosmos DB container that keeps track of changes happening on the monitored container. It stores the list of changes in the **Change Feed**. The [change feed design pattern](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-design-patterns) supports multiple parallel listeners by keeping independent feeds for each partition range. The listener application instances acquire leases on these individual feeds before processing them. This ensures that a change is not processed by multiple applications. You may have both monitored and lease containers in the same Cosmos DB account, but they can also be situated in different accounts.
 
 - **KEDA** - KEDA runs as a separate service in Kubernetes cluster. It enables auto-scaling of applications based on internal and more primarily, external events. Check [KEDA documentation](https://keda.sh/docs/concepts/) to learn more.
 
-- **External Scaler** - While KEDA ships with a set of [built-in scalers](https://keda.sh/docs/scalers/), it also allows users to extend KEDA through support for [external scalers](https://keda.sh/docs/scalers/external/). In this scheme, KEDA will query user's GRPC service to fetch  metrics of an event source, and will scale the applications accordingly. This is wheres 'KEDA external scaler for Azure Cosmos DB' plugs itself in. For information on how an external scaler can be implemented, check [KEDA external scaler concept](https://keda.sh/docs/concepts/external-scalers/).
+- **External Scaler** - While KEDA ships with a set of [built-in scalers](https://keda.sh/docs/scalers/), it also allows users to extend KEDA through support for [external scalers](https://keda.sh/docs/scalers/external/). In this scheme, KEDA will query user's GRPC service to fetch metrics of an event source and will scale the applications accordingly. This is where 'KEDA external scaler for Azure Cosmos DB' plugs itself in. For information on how an external scaler can be implemented, check [KEDA external scaler concept](https://keda.sh/docs/concepts/external-scalers/).
 
 - **Listener Application(s)** - This represents the application `Deployment` or `StatefulSet` that you would like to scale in and out using KEDA and the external scaler. For information on how to setup the change feed processor in your application that processes changes in Cosmos DB container, read documentation on [change feed processing](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor).
 
@@ -30,23 +30,30 @@ The external scaler calls Cosmos DB APIs to estimate the amount of changes pendi
 
 > :warning: **Caution:** The [Java SDK v2](https://github.com/Azure/azure-cosmosdb-java) client library uses a different naming convention for lease documents inside the lease container. This makes it incompatible with [.NET SDK v3](https://github.com/Azure/azure-cosmos-dotnet-v3), the one that the external scaler depends on to estimate the pending changes on change feeds. Hence, if you have a Java-based target consumer application, your change feeds would be having lease documents with incompatible IDs, and the external scaler would be unable to detect any pending change remaining to be consumed. Consequently, it will scale down your application to `minReplicaCount` if defined in the `ScaledObject` or to zero instances.
 
-### Deploy KEDA
+### Deploy KEDA and External Scaler
 
-Follow one of the steps on [Deploying KEDA](https://keda.sh/docs/deploy/) documentation page to deploy KEDA on your Kubernetes cluster.
+1. Add and update Helm chart repo.
 
-### Deploy External Scaler
+    ```shell
+    helm repo add kedacore https://kedacore.github.io/charts
+    helm repo update
+    ```
 
-Clone the repository and change to root directory of the cloned repo. Apply the configuration from file `deploy/deploy-scaler.yaml`. It deploys the external scaler `Deployment` resource to the `keda` namespace. It also creates a `Service` resource, that KEDA will send requests to, to fetch the Cosmos DB metrics.
+1. Install KEDA Helm chart (*or follow one of the other installation methods on [KEDA documentation](https://keda.sh/docs/deploy)*).
 
-Before applying the configuration, please update the image path in the YAML file if you want to deploy the scaler from a non-`experimental` image. Similarly, you can also update the name and namespace of the external scaler `Deployment` and `Service`.
+    ```shell
+    helm install keda kedacore/keda --namespace keda --create-namespace
+    ```
 
-```text
-kubectl apply filename=deploy/deploy.yaml
-```
+1. Install Azure Cosmos DB external scaler Helm chart.
+
+    ```shell
+    helm install external-scaler-azure-cosmos-db kedacore/external-scaler-azure-cosmos-db --namespace keda --create-namespace
+    ```
 
 ### Create `ScaledObject` Resource
 
-Create `ScaledObject` resource that contains the information about your application (the scale target), external scaler, Cosmos DB containers, change feed processor, and other scaling configuration values. Check [`ScaledObject` specification](https://keda.sh/docs/concepts/scaling-deployments/) and [`External` trigger specification](https://keda.sh/docs/scalers/external/) for information on different properties supported for `ScaledObject` and their allowed values.
+Create `ScaledObject` resource that contains the information about your application (the scale target), the external scaler service, Cosmos DB containers, and other scaling configuration values. Check [`ScaledObject` specification](https://keda.sh/docs/concepts/scaling-deployments/) and [`External` trigger specification](https://keda.sh/docs/scalers/external/) for information on different properties supported for `ScaledObject` and their allowed values.
 
 You can use file `deploy/deploy-scaledobject.yaml` as a template for creating the `ScaledObject`. The trigger metadata properties required to use the external scaler for Cosmos DB are described in [Trigger Specification](#trigger-specification) section below.
 
@@ -60,19 +67,19 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
   triggers:
     - type: external
       metadata:
-        scalerAddress: keda-cosmosdb-scaler.keda:4050 # Mandatory. Address of the external scaler service. 
-        connection: <connection>                      # Mandatory. Connection string of Cosmos DB account with monitored container.
-        databaseId: <database-id>                     # Mandatory. ID of Cosmos DB database containing monitored container.
-        containerId: <container-id>                   # Mandatory. ID of monitored container.
-        leaseConnection: <lease-connection>           # Mandatory. Connection string of Cosmos DB account with lease container.
-        leaseDatabaseId: <lease-database-id>          # Mandatory. ID of Cosmos DB database containing lease container.
-        leaseContainerId: <lease-container-id>        # Mandatory. ID of lease container.
-        processorName: <processor-name>               # Mandatory. Name of change-feed processor used by listener application.
+        scalerAddress: external-scaler-azure-cosmos-db.keda:4050 # Mandatory. Address of the external scaler service.
+        connection: <connection>               # Mandatory. Connection string of Cosmos DB account with monitored container.
+        databaseId: <database-id>              # Mandatory. ID of Cosmos DB database containing monitored container.
+        containerId: <container-id>            # Mandatory. ID of monitored container.
+        leaseConnection: <lease-connection>    # Mandatory. Connection string of Cosmos DB account with lease container.
+        leaseDatabaseId: <lease-database-id>   # Mandatory. ID of Cosmos DB database containing lease container.
+        leaseContainerId: <lease-container-id> # Mandatory. ID of lease container.
+        processorName: <processor-name>        # Mandatory. Name of change-feed processor used by listener application.
 ```
 
 ### Parameter List
 
-- **`scalerAddress`** - Address of the external scaler service. This would be in format `<scaler-name>:<scaler-namespace>:<port>`. The port is hardcoded to be `4050` in the external scaler. If you haven't updated the `name` and `namespace` properties in file `deploy/deploy-scaler` when applying the configuration, the metadata value would be `keda-cosmosdb-scaler.keda:4050`.
+- **`scalerAddress`** - Address of the external scaler service. This would be in format `<scaler-name>.<scaler-namespace>:<port>`. If you installed Azure Cosmos DB external scaler Helm chart in `keda` namespace and did not specify custom values, the metadata value would be `external-scaler-azure-cosmos-db.keda:4050`.
 
 - **`connection`** - Connection string of the Cosmos DB account that contains the monitored container.
 
@@ -86,6 +93,6 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`leaseContainerId`** - ID of the lease container containing the change feeds.
 
-- **`processorName`** -  Name of change-feed processor used by listener application. For more information on this, you can refer to [Implementing the change feed processor](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) section.
+- **`processorName`** - Name of change-feed processor used by listener application. For more information on this, you can refer to [Implementing the change feed processor](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) section.
 
 > **Note** Ideally, we would have created `TriggerAuthentication` resource that would have prevented us from adding the connection strings in plain text in the `ScaledObject` trigger metadata. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).
