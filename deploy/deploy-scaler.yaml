@@ -24,7 +24,7 @@ spec:
         app: keda-cosmosdb-scaler
     spec:
       containers:
-        - image: ghcr.io/kedacore/keda-external-scaler-azure-cosmos-db:experimental
+        - image: ghcr.io/kedacore/external-scaler-azure-cosmos-db:experimental
           imagePullPolicy: Always
           name: keda-cosmosdb-scaler
           ports:
