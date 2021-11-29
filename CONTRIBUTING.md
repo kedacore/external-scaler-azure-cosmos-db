@@ -22,7 +22,7 @@ You can learn about the governance of KEDA [here](https://github.com/kedacore/go
 
 ## Including Documentation Changes
 
-For any contribution you make that impacts the behavior or experience of KEDA, please open a corresponding docs request for [keda.sh](https://keda.sh) through [https://github.com/kedacore/keda-docs](https://github.com/kedacore/keda-docs).  Contributions that do not include documentation or samples will be rejected.
+For any contribution you make that impacts the behavior or experience of KEDA, please open a corresponding docs request for [keda.sh](https://keda.sh) through [https://github.com/kedacore/keda-docs](https://github.com/kedacore/keda-docs). Contributions that do not include documentation or samples will be rejected.
 
 ## Developer Certificate of Origin: Signing your work
 
@@ -53,7 +53,7 @@ Git even has a `-s` command line option to append this automatically to your com
 $ git commit -s -m 'This is my commit message'
 ```
 
-Each Pull Request is checked  whether or not commits in a Pull Request do contain a valid Signed-off-by line.
+Each Pull Request is checked whether or not commits in a Pull Request do contain a valid Signed-off-by line.
 
 ### I didn't sign my commit, now what?!
 

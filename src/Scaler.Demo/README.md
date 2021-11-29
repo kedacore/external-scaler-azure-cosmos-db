@@ -114,7 +114,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 ## Deploying sample application to cluster
 
-1. Build the Docker container image for order-processor application (if you haven't already) and push the container image to Docker Hub. Make sure to replace  `<docker-id>` in below commands with your Docker ID.
+1. Build the Docker container image for order-processor application (if you haven't already) and push the container image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
 
     ```text
     # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
