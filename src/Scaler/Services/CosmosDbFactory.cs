@@ -7,7 +7,7 @@ namespace Keda.CosmosDb.Scaler
     {
         // As per https://docs.microsoft.com/dotnet/api/microsoft.azure.cosmos.cosmosclient, it is recommended to
         // maintain a single instance of CosmosClient per lifetime of the application.
-        private readonly ConcurrentDictionary<string, CosmosClient> _cosmosClientCache = new ConcurrentDictionary<string, CosmosClient>();
+        private readonly ConcurrentDictionary<string, CosmosClient> _cosmosClientCache = new();
 
         public CosmosClient GetCosmosClient(string connection)
         {

@@ -65,11 +65,11 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     2021-09-03 06:52:34 info: Microsoft.Hosting.Lifetime[0]
         Content root path: /app
     2021-09-03 06:52:59 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
-        1 orders received
+        1 order(s) received
     2021-09-03 06:52:59 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
         Processing order e5912b0a-939b-45bc-87de-9baa314ca65e - 9 unit(s) of Soap bought by Uriel Cormier
     2021-09-03 06:53:00 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
-        2 orders received
+        2 order(s) received
     2021-09-03 06:53:00 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
         Processing order 6daae206-027c-4055-8d39-97274de1ab59 - 3 unit(s) of Mouse bought by Cleta Padberg
     2021-09-03 06:53:01 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]

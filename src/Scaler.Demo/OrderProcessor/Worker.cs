@@ -23,15 +23,16 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override async Task StartAsync(CancellationToken stoppingToken)
+        public override async Task StartAsync(CancellationToken cancellationToken)
         {
             Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
-                .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId);
+                .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
 
             Container leaseContainer = await leaseDatabase
                 .CreateContainerIfNotExistsAsync(
                     new ContainerProperties(_cosmosDbConfig.LeaseContainerId, partitionKeyPath: "/id"),
-                    throughput: 400);
+                    throughput: 400,
+                    cancellationToken: cancellationToken);
 
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
@@ -47,12 +48,12 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             _logger.LogInformation($"Started change feed processor instance {instanceName}");
         }
 
-        public override async Task StopAsync(CancellationToken stoppingToken)
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
             await _processor.StopAsync();
             _logger.LogInformation("Stopped change feed processor");
 
-            await base.StopAsync(stoppingToken);
+            await base.StopAsync(cancellationToken);
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -62,7 +63,7 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         private async Task ProcessOrdersAsync(IReadOnlyCollection<Order> orders, CancellationToken cancellationToken)
         {
-            _logger.LogInformation(orders.Count + " orders received");
+            _logger.LogInformation($"{orders.Count} order(s) received");
 
             foreach (Order order in orders)
             {

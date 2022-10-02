@@ -8,12 +8,10 @@ namespace Keda.CosmosDb.Scaler
     internal sealed class CosmosDbScalerService : ExternalScaler.ExternalScalerBase
     {
         private readonly ICosmosDbMetricProvider _metricProvider;
-        private readonly ILogger<CosmosDbScalerService> _logger;
 
-        public CosmosDbScalerService(ICosmosDbMetricProvider metricProvider, ILogger<CosmosDbScalerService> logger)
+        public CosmosDbScalerService(ICosmosDbMetricProvider metricProvider)
         {
             _metricProvider = metricProvider ?? throw new ArgumentNullException(nameof(metricProvider));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)

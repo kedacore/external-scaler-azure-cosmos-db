@@ -133,7 +133,7 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
 
             Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId} with throughput: {_cosmosDbConfig.ContainerThroughput} RU/s");
 
-            Container container = await database.CreateContainerIfNotExistsAsync(
+            await database.CreateContainerIfNotExistsAsync(
                 new ContainerProperties(_cosmosDbConfig.ContainerId, partitionKeyPath: $"/{nameof(Order.Article)}"),
                 throughput: _cosmosDbConfig.ContainerThroughput);
 

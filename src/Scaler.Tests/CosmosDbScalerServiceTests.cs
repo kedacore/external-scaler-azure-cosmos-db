@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -15,10 +14,7 @@ namespace Keda.CosmosDb.Scaler.Tests
         public CosmosDbScalerServiceTests()
         {
             _metricProviderMock = new Mock<ICosmosDbMetricProvider>();
-
-            _cosmosDbScalerService = new CosmosDbScalerService(
-                metricProvider: _metricProviderMock.Object,
-                logger: new LoggerFactory().CreateLogger<CosmosDbScalerService>());
+            _cosmosDbScalerService = new CosmosDbScalerService(_metricProviderMock.Object);
         }
 
         [Theory]
@@ -162,7 +158,7 @@ namespace Keda.CosmosDb.Scaler.Tests
                 response.MetricSpecs[0].MetricName);
         }
 
-        private GetMetricsRequest GetGetMetricsRequest()
+        private static GetMetricsRequest GetGetMetricsRequest()
         {
             return new GetMetricsRequest
             {
@@ -171,7 +167,7 @@ namespace Keda.CosmosDb.Scaler.Tests
             };
         }
 
-        private GetMetricsRequest GetGetMetricsRequestWithoutMetadata(string metadataKey)
+        private static GetMetricsRequest GetGetMetricsRequestWithoutMetadata(string metadataKey)
         {
             return new GetMetricsRequest
             {
@@ -180,7 +176,7 @@ namespace Keda.CosmosDb.Scaler.Tests
             };
         }
 
-        private ScaledObjectRef GetScaledObjectRefWithoutMetadata(string metadataKey)
+        private static ScaledObjectRef GetScaledObjectRefWithoutMetadata(string metadataKey)
         {
             var scaledObjectRef = GetScaledObjectRef();
             scaledObjectRef.ScalerMetadata.Remove(metadataKey);
@@ -188,7 +184,7 @@ namespace Keda.CosmosDb.Scaler.Tests
             return scaledObjectRef;
         }
 
-        private ScaledObjectRef GetScaledObjectRef()
+        private static ScaledObjectRef GetScaledObjectRef()
         {
             var scaledObjectRef = new ScaledObjectRef
             {
