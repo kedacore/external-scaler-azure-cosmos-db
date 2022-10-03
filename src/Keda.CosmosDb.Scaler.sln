@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32505.173
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.CosmosDb.Scaler", "Scaler\Keda.CosmosDb.Scaler.csproj", "{BF3566AE-346E-4769-BEED-6F08A433A3E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keda.CosmosDb.Scaler", "Scaler\Keda.CosmosDb.Scaler.csproj", "{BF3566AE-346E-4769-BEED-6F08A433A3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.CosmosDb.Scaler.Tests", "Scaler.Tests\Keda.CosmosDb.Scaler.Tests.csproj", "{58416233-F4D2-446D-9891-E753DFC5E748}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keda.CosmosDb.Scaler.Tests", "Scaler.Tests\Keda.CosmosDb.Scaler.Tests.csproj", "{58416233-F4D2-446D-9891-E753DFC5E748}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.CosmosDb.Scaler.Demo.OrderProcessor", "Scaler.Demo\OrderProcessor\Keda.CosmosDb.Scaler.Demo.OrderProcessor.csproj", "{4B598340-B1E2-49E4-B1C4-5026EA26A731}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keda.CosmosDb.Scaler.Demo.OrderProcessor", "Scaler.Demo\OrderProcessor\Keda.CosmosDb.Scaler.Demo.OrderProcessor.csproj", "{4B598340-B1E2-49E4-B1C4-5026EA26A731}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.CosmosDb.Scaler.Demo.Shared", "Scaler.Demo\Shared\Keda.CosmosDb.Scaler.Demo.Shared.csproj", "{8FC14DFF-B6D4-4EC3-88AE-3B3B4304CB65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keda.CosmosDb.Scaler.Demo.Shared", "Scaler.Demo\Shared\Keda.CosmosDb.Scaler.Demo.Shared.csproj", "{8FC14DFF-B6D4-4EC3-88AE-3B3B4304CB65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.CosmosDb.Scaler.Demo.OrderGenerator", "Scaler.Demo\OrderGenerator\Keda.CosmosDb.Scaler.Demo.OrderGenerator.csproj", "{D469E3DD-887B-4288-87F4-51B03AE64B0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keda.CosmosDb.Scaler.Demo.OrderGenerator", "Scaler.Demo\OrderGenerator\Keda.CosmosDb.Scaler.Demo.OrderGenerator.csproj", "{D469E3DD-887B-4288-87F4-51B03AE64B0A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BF3566AE-346E-4769-BEED-6F08A433A3E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -86,5 +83,11 @@ Global
 		{D469E3DD-887B-4288-87F4-51B03AE64B0A}.Release|x64.Build.0 = Release|Any CPU
 		{D469E3DD-887B-4288-87F4-51B03AE64B0A}.Release|x86.ActiveCfg = Release|Any CPU
 		{D469E3DD-887B-4288-87F4-51B03AE64B0A}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AD5F4826-691F-4681-B4B4-1F541B173B46}
 	EndGlobalSection
 EndGlobal

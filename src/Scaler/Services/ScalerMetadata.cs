@@ -22,14 +22,11 @@ namespace Keda.CosmosDb.Scaler
         {
             get
             {
-                if (_metricName == null)
-                {
-                    // Normalize metric name.
-                    _metricName =
-                        $"cosmosdb-partitioncount-{this.LeaseAccountHost}-{this.LeaseDatabaseId}-{this.LeaseContainerId}-{this.ProcessorName}"
-                        .Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-")
-                        .ToLower();
-                }
+                // Normalize metric name.
+                _metricName ??=
+                    $"cosmosdb-partitioncount-{this.LeaseAccountHost}-{this.LeaseDatabaseId}-{this.LeaseContainerId}-{this.ProcessorName}"
+                    .Replace("/", "-").Replace(".", "-").Replace(":", "-").Replace("%", "-")
+                    .ToLower();
 
                 return _metricName;
             }
