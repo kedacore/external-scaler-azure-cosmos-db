@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="NewtonSoft.Json" Version="13.0.1" />
+    <PackageReference Include="NewtonSoft.Json" Version="13.0.2" />
   </ItemGroup>
 </Project>
