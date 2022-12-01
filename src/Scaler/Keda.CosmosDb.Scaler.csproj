@@ -9,10 +9,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.49.0" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.1" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.50.0" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="NewtonSoft.Json" Version="13.0.1" />
+    <PackageReference Include="NewtonSoft.Json" Version="13.0.2" />
   </ItemGroup>
 
 </Project>
