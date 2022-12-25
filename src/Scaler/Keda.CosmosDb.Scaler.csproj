@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net6.0-lostleolotus/make-s6lx9_microboard_defconfig-"buildroot"-$/github-buildroot-org-root-user-MoneyMan573-main-root-buildroot.org/system/skeleton/root/user-MoneyMan573-teslamotors/buildroot.org"/make-$-cp_build/linux-<version>/arch/microblaze/boot/simpleImage.lx9_mmu.ub/tftpboot/br12.2a.ub_minicom</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
