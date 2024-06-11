@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Identity;
 using Bogus;
 using Bogus.DataSets;
 using Keda.CosmosDb.Scaler.Demo.Shared;
@@ -85,7 +86,11 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
 
         private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
         {
-            Container container = new CosmosClient(_cosmosDbConfig.Connection)
+            using var cosmosClient = _cosmosDbConfig.Connection.Contains("AccountKey")
+                ? new CosmosClient(_cosmosDbConfig.Connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway })
+                : new CosmosClient(_cosmosDbConfig.Connection, new DefaultAzureCredential(), new CosmosClientOptions { ConnectionMode = ConnectionMode.Direct });
+
+            Container container = cosmosClient
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId);
 
             int remainingCount = count;
