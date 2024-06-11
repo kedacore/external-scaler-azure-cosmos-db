@@ -68,10 +68,12 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
     - type: external
       metadata:
         scalerAddress: external-scaler-azure-cosmos-db.keda:4050 # Mandatory. Address of the external scaler service.
-        connection: <connection>               # Mandatory. Connection string of Cosmos DB account with monitored container.
+        connection: <connection>               # Optional. Connection string of Cosmos DB account with monitored container. Either `connection` or `endpoint` has to be provided.
+        endpoint: <endpoint>                   # Optional. Cosmos DB endpoint with monitored container. Either `connection` or `endpoint` has to be provided.
         databaseId: <database-id>              # Mandatory. ID of Cosmos DB database containing monitored container.
         containerId: <container-id>            # Mandatory. ID of monitored container.
-        leaseConnection: <lease-connection>    # Mandatory. Connection string of Cosmos DB account with lease container.
+        leaseConnection: <lease-connection>    # Optional. Connection string of Cosmos DB account with lease container. Either `leaseConnection` or `leaseEndpoint` has to be provided.
+        leaseEndpoint: <lease-endpoint>        # Optional. Cosmos DB endpoint with lease container. Either `leaseConnection` or `leaseEndpoint` has to be provided.
         leaseDatabaseId: <lease-database-id>   # Mandatory. ID of Cosmos DB database containing lease container.
         leaseContainerId: <lease-container-id> # Mandatory. ID of lease container.
         processorName: <processor-name>        # Mandatory. Name of change-feed processor used by listener application.
@@ -81,13 +83,13 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`scalerAddress`** - Address of the external scaler service. This would be in format `<scaler-name>.<scaler-namespace>:<port>`. If you installed Azure Cosmos DB external scaler Helm chart in `keda` namespace and did not specify custom values, the metadata value would be `external-scaler-azure-cosmos-db.keda:4050`.
 
-- **`connection`** - Connection string of the Cosmos DB account that contains the monitored container.
+- **`connection`** or **`endpoint`** - Connection string of the Cosmos DB account or Cosmos DB endpoint that contains the monitored container.
 
 - **`databaseId`** - ID of Cosmos DB database that contains the monitored container.
 
 - **`containerId`** - ID of the monitored container.
 
-- **`leaseConnection`** - Connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
+- **`leaseConnection`** or **`leaseEndpoint`**- Connection string of the Cosmos DB account or Cosmos DB endpoint that contains the lease container. This can be same or different from the value of `connection` metadata.
 
 - **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
 
@@ -95,4 +97,6 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`processorName`** - Name of change-feed processor used by listener application. For more information on this, you can refer to [Implementing the change feed processor](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) section.
 
-> **Note** Ideally, we would have created `TriggerAuthentication` resource that would have prevented us from adding the connection strings in plain text in the `ScaledObject` trigger metadata. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).
+### Workload Identity support
+
+To utilize Azure Workload Identity via Default Azure Credential use **`endpoint`** and **`leaseEndpoint`** parameters.
