@@ -14,7 +14,7 @@ namespace Keda.CosmosDb.Scaler
             _cosmosClientCache.GetOrAdd(connection, CreateCosmosClient);
 
         private CosmosClient CreateCosmosClient(string connection) =>
-            connection.Contains("Accountkey") ?
+            connection.Contains("AccountKey") ?
                 new CosmosClient(connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway }) :
                 new CosmosClient(connection, new DefaultAzureCredential(), new CosmosClientOptions { ConnectionMode = ConnectionMode.Direct });
 
