@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Identity;
 using Keda.CosmosDb.Scaler.Demo.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Hosting;
@@ -25,6 +26,10 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
+            var cosmosClient = _cosmosDbConfig.Connection.Contains("AccountKey")
+            ? new CosmosClient(_cosmosDbConfig.Connection)
+            : new CosmosClient(_cosmosDbConfig.Connection, new DefaultAzureCredential());
+
             Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
 
