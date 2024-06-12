@@ -132,8 +132,11 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
         private static async Task SetupAsync()
         {
             Console.WriteLine($"Creating database: {_cosmosDbConfig.DatabaseId}");
+            using var cosmosClient = _cosmosDbConfig.Connection.Contains("AccountKey")
+                ? new CosmosClient(_cosmosDbConfig.Connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway })
+                : new CosmosClient(_cosmosDbConfig.Connection, new DefaultAzureCredential(), new CosmosClientOptions { ConnectionMode = ConnectionMode.Direct });
 
-            Database database = await new CosmosClient(_cosmosDbConfig.Connection)
+            Database database = await cosmosClient
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.DatabaseId);
 
             Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId} with throughput: {_cosmosDbConfig.ContainerThroughput} RU/s");
@@ -147,12 +150,14 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
 
         private static async Task TeardownAsync()
         {
-            var client = new CosmosClient(_cosmosDbConfig.Connection);
+            using var cosmosClient = _cosmosDbConfig.Connection.Contains("AccountKey")
+                ? new CosmosClient(_cosmosDbConfig.Connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway })
+                : new CosmosClient(_cosmosDbConfig.Connection, new DefaultAzureCredential(), new CosmosClientOptions { ConnectionMode = ConnectionMode.Direct });
 
             try
             {
                 Console.WriteLine($"Deleting database: {_cosmosDbConfig.DatabaseId}");
-                await client.GetDatabase(_cosmosDbConfig.DatabaseId).DeleteAsync();
+                await cosmosClient.GetDatabase(_cosmosDbConfig.DatabaseId).DeleteAsync();
             }
             catch (CosmosException)
             {

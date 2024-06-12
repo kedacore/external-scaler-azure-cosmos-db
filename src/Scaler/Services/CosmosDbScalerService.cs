@@ -8,10 +8,12 @@ namespace Keda.CosmosDb.Scaler
     internal sealed class CosmosDbScalerService : ExternalScaler.ExternalScalerBase
     {
         private readonly ICosmosDbMetricProvider _metricProvider;
+        private readonly ILogger<CosmosDbScalerService> _logger;
 
-        public CosmosDbScalerService(ICosmosDbMetricProvider metricProvider)
+        public CosmosDbScalerService(ICosmosDbMetricProvider metricProvider, ILogger<CosmosDbScalerService> logger)
         {
             _metricProvider = metricProvider ?? throw new ArgumentNullException(nameof(metricProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
@@ -19,6 +21,8 @@ namespace Keda.CosmosDb.Scaler
             var scalerMetadata = ScalerMetadata.Create(request);
 
             bool isActive = (await _metricProvider.GetPartitionCountAsync(scalerMetadata)) > 0L;
+
+            _logger.LogInformation("Scaler is {status}", isActive ? "active" : "inactive");
             return new IsActiveResponse { Result = isActive };
         }
 
@@ -34,6 +38,7 @@ namespace Keda.CosmosDb.Scaler
                 MetricValue_ = await _metricProvider.GetPartitionCountAsync(scalerMetadata),
             });
 
+            _logger.LogInformation("Returning metric value {value} for metric {metric}", response.MetricValues[0].MetricValue_, response.MetricValues[0].MetricName);
             return response;
         }
 
@@ -49,6 +54,7 @@ namespace Keda.CosmosDb.Scaler
                 TargetSize = 1L,
             });
 
+            _logger.LogInformation("Returning target size {size} for metric {metric}", response.MetricSpecs[0].TargetSize, response.MetricSpecs[0].MetricName);
             return Task.FromResult(response);
         }
     }

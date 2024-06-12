@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -15,7 +16,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         public CosmosDbScalerServiceTests()
         {
             _metricProviderMock = new Mock<ICosmosDbMetricProvider>();
-            _cosmosDbScalerService = new CosmosDbScalerService(_metricProviderMock.Object);
+            var _loggerMock = new Mock<ILogger<CosmosDbScalerService>>();
+            _cosmosDbScalerService = new CosmosDbScalerService(_metricProviderMock.Object, _loggerMock.Object);
         }
 
         [Theory]

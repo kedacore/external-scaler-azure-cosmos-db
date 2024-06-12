@@ -30,7 +30,7 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             ? new CosmosClient(_cosmosDbConfig.Connection)
             : new CosmosClient(_cosmosDbConfig.Connection, new DefaultAzureCredential());
 
-            Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
+            Database leaseDatabase = await cosmosClient
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
 
             Container leaseContainer = await leaseDatabase
@@ -42,7 +42,7 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
-            _processor = new CosmosClient(_cosmosDbConfig.Connection)
+            _processor = cosmosClient
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)

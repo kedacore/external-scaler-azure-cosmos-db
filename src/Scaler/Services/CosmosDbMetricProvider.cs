@@ -41,10 +41,18 @@ namespace Keda.CosmosDb.Scaler
                     while (iterator.HasMoreResults)
                     {
                         FeedResponse<ChangeFeedProcessorState> states = await iterator.ReadNextAsync();
-                        partitionCount += states.Where(state => state.EstimatedLag > 0).Count();
+
+                        foreach (ChangeFeedProcessorState leaseState in states)
+                        {
+                            string host = leaseState.InstanceName == null ? $"not owned by any host currently" : $"owned by host {leaseState.InstanceName}";
+                            _logger.LogInformation("Lease [{LeaseToken}] {host} reports {EstimatedLag} as estimated lag.", leaseState.LeaseToken, host, leaseState.EstimatedLag);
+
+                            partitionCount += leaseState.EstimatedLag > 0 ? 1 : 0;
+                        }
                     }
                 }
 
+                _logger.LogInformation("Returning active {partitionCount}", partitionCount);
                 return partitionCount;
             }
             catch (CosmosException exception)
