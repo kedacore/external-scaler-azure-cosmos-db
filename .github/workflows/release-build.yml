@@ -34,13 +34,13 @@ jobs:
         run: dotnet test src --no-restore
 
       - name: Build Docker image for order-generator
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: ./src/Scaler.Demo/OrderGenerator/Dockerfile
           tags: cosmosdb-order-generator:${{ env.VERSION_TAG }}
 
       - name: Build Docker image for order-processor
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: ./src/Scaler.Demo/OrderProcessor/Dockerfile
           tags: cosmosdb-order-processor:${{ env.VERSION_TAG }}
@@ -64,7 +64,7 @@ jobs:
 
       # Using metadata ensures all lower-case tag-name even if the GitHub username has upper-case letters.
       - name: Build push Docker image for scaler
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: ./src/Scaler/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
