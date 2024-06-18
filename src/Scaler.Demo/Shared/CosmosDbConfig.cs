@@ -5,11 +5,13 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
     public class CosmosDbConfig
     {
         public string Connection { get; set; }
+        public string Endpoint { get; set; }
         public string DatabaseId { get; set; }
         public string ContainerId { get; set; }
         public int ContainerThroughput { get; set; }
 
         public string LeaseConnection { get; set; }
+        public string LeaseEndpoint { get; set; }
         public string LeaseDatabaseId { get; set; }
         public string LeaseContainerId { get; set; }
         public string ProcessorName { get; set; }

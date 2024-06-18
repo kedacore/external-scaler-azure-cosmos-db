@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Azure.Cosmos;
+using Azure.Identity;
 
 namespace Keda.CosmosDb.Scaler
 {
@@ -9,14 +10,19 @@ namespace Keda.CosmosDb.Scaler
         // maintain a single instance of CosmosClient per lifetime of the application.
         private readonly ConcurrentDictionary<string, CosmosClient> _cosmosClientCache = new();
 
-        public CosmosClient GetCosmosClient(string connection)
+        public CosmosClient GetCosmosClient(string endpoint)
         {
-            return _cosmosClientCache.GetOrAdd(connection, CreateCosmosClient);
+            return _cosmosClientCache.GetOrAdd(endpoint, CreateCosmosClient);
         }
 
-        private CosmosClient CreateCosmosClient(string connection)
+        //private CosmosClient CreateCosmosClient(string connection)
+        private CosmosClient CreateCosmosClient(string endpoint)
         {
-            return new CosmosClient(connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
+
+            var credential = new DefaultAzureCredential();
+            return new Microsoft.Azure.Cosmos.CosmosClient(endpoint, credential, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
+           
+
         }
     }
 }

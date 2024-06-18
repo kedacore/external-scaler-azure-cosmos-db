@@ -7,6 +7,8 @@ using Keda.CosmosDb.Scaler.Demo.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Azure.Identity;
+using static Azure.Core.HttpHeader;
 
 namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 {
@@ -25,8 +27,27 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
-                .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
+            Database leaseDatabase;
+
+            // Create a new instance of the CosmosClient with a custom name
+            CosmosClientOptions clientOptions = new CosmosClientOptions
+            {
+                ApplicationName = "keda-external-azure-cosmos-db"
+            };
+
+            if (string.IsNullOrEmpty(_cosmosDbConfig.LeaseConnection))
+            {
+                var credential = new DefaultAzureCredential();
+
+                leaseDatabase = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.LeaseEndpoint, credential, clientOptions)
+                    .GetDatabase(_cosmosDbConfig.LeaseDatabaseId);
+            }
+            else
+            {
+                leaseDatabase = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.LeaseConnection, clientOptions)
+                    
+                    .GetDatabase(_cosmosDbConfig.LeaseDatabaseId);
+            }
 
             Container leaseContainer = await leaseDatabase
                 .CreateContainerIfNotExistsAsync(
@@ -37,7 +58,21 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
-            _processor = new CosmosClient(_cosmosDbConfig.Connection)
+
+            CosmosClient cosmosClient;
+
+            if (string.IsNullOrEmpty(_cosmosDbConfig.Connection))
+            {
+                var credential = new DefaultAzureCredential();
+
+                cosmosClient = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.Endpoint, credential);
+            }
+            else
+            {
+                cosmosClient = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.Connection);
+            }
+
+            _processor = cosmosClient
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)

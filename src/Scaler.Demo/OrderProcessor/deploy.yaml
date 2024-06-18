@@ -5,6 +5,9 @@ kind: Deployment
 metadata:
   name: cosmosdb-order-processor
   namespace: default
+  labels:
+    aadpodidbinding: "my-pod-identity"  # refer to https://learn.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity#create-a-pod-identity
+    app: cosmosdb-order-processor	
 spec:
   replicas: 1 # A replica is required to be up momentarily to initialize the change-feed.
   selector:
@@ -14,13 +17,14 @@ spec:
     metadata:
       labels:
         app: cosmosdb-order-processor
+        aadpodidbinding: "my-pod-identity"  # refer to https://learn.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity#create-a-pod-identity
     spec:
       containers:
         - name: cosmosdb-order-processor
           image: <docker-id>/cosmosdb-order-processor:latest
           imagePullPolicy: Always
           env:
-            - name: CosmosDbConfig__Connection
-              value: <connection-string-of-monitored-container>
-            - name: CosmosDbConfig__LeaseConnection
-              value: <connection-string-of-lease-container>
+            - name: CosmosDbConfig__Endpoint
+              value: <endpoint-URL-of-cosmos-DB-account-monitored-container>
+            - name: CosmosDbConfig__LeaseEndpoint
+              value: <endpoint-URL-of-cosmos-DB-account-lease-container>
