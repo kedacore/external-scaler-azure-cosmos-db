@@ -1,5 +1,7 @@
+using System;
 using System.Threading.Tasks;
 using Google.Protobuf.Collections;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -14,14 +16,13 @@ namespace Keda.CosmosDb.Scaler.Tests
         public CosmosDbScalerServiceTests()
         {
             _metricProviderMock = new Mock<ICosmosDbMetricProvider>();
-            _cosmosDbScalerService = new CosmosDbScalerService(_metricProviderMock.Object);
+            var _loggerMock = new Mock<ILogger<CosmosDbScalerService>>();
+            _cosmosDbScalerService = new CosmosDbScalerService(_metricProviderMock.Object, _loggerMock.Object);
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -31,29 +32,31 @@ namespace Keda.CosmosDb.Scaler.Tests
                 () => _cosmosDbScalerService.IsActive(GetScaledObjectRefWithoutMetadata(metadataKey), null));
         }
 
-        [Fact]
-        public async Task IsActive_ReturnsFalseOnZeroPartitions()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task IsActive_ReturnsFalseOnZeroPartitions(bool workloadIdentity)
         {
             _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(0L);
-            IsActiveResponse response = await _cosmosDbScalerService.IsActive(GetScaledObjectRef(), null);
+            IsActiveResponse response = await _cosmosDbScalerService.IsActive(GetScaledObjectRef(workloadIdentity), null);
             Assert.False(response.Result);
         }
 
         [Theory]
-        [InlineData(1L)]
-        [InlineData(100L)]
-        public async Task IsActive_ReturnsFalseOnNonZeroPartitions(long partitionCount)
+        [InlineData(1L, true)]
+        [InlineData(1L, false)]
+        [InlineData(100L, true)]
+        [InlineData(100L, false)]
+        public async Task IsActive_ReturnsFalseOnNonZeroPartitions(long partitionCount, bool workloadIdentity)
         {
             _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(partitionCount);
-            IsActiveResponse response = await _cosmosDbScalerService.IsActive(GetScaledObjectRef(), null);
+            IsActiveResponse response = await _cosmosDbScalerService.IsActive(GetScaledObjectRef(workloadIdentity), null);
             Assert.True(response.Result);
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -64,13 +67,16 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData(0L)]
-        [InlineData(1L)]
-        [InlineData(100L)]
-        public async Task GetMetrics_ReturnsPartitionCount(long partitionCount)
+        [InlineData(0L, true)]
+        [InlineData(0L, false)]
+        [InlineData(1L, true)]
+        [InlineData(1L, false)]
+        [InlineData(100L, true)]
+        [InlineData(100L, false)]
+        public async Task GetMetrics_ReturnsPartitionCount(long partitionCount, bool workloadIdentity)
         {
             _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(partitionCount);
-            GetMetricsResponse response = await _cosmosDbScalerService.GetMetrics(GetGetMetricsRequest(), null);
+            GetMetricsResponse response = await _cosmosDbScalerService.GetMetrics(GetGetMetricsRequest(workloadIdentity), null);
 
             Assert.Single(response.MetricValues);
 
@@ -82,14 +88,16 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("")]
-        [InlineData("custom-metric-name")]
-        public async Task GetMetrics_ReturnsSameMetricNameIfPassed(string requestMetricName)
+        [InlineData("", true)]
+        [InlineData("", false)]
+        [InlineData("custom-metric-name", true)]
+        [InlineData("custom-metric-name", false)]
+        public async Task GetMetrics_ReturnsSameMetricNameIfPassed(string requestMetricName, bool workloadIdentity)
         {
             _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
 
             // No assertion with request.MetricName since it is ignored.
-            GetMetricsRequest request = GetGetMetricsRequest();
+            GetMetricsRequest request = GetGetMetricsRequest(workloadIdentity);
             request.ScaledObjectRef.ScalerMetadata["metricName"] = requestMetricName;
 
             GetMetricsResponse response = await _cosmosDbScalerService.GetMetrics(request, null);
@@ -99,10 +107,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -112,10 +118,30 @@ namespace Keda.CosmosDb.Scaler.Tests
                 () => _cosmosDbScalerService.GetMetricSpec(GetScaledObjectRefWithoutMetadata(metadataKey), null));
         }
 
-        [Fact]
-        public async Task GetMetricSpec_ReturnsMetricSpec()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetMetricSpec_DoesNotThrowsOnOptionalMetadata(bool workloadIdentity)
         {
-            GetMetricSpecResponse response = await _cosmosDbScalerService.GetMetricSpec(GetScaledObjectRef(), null);
+            await _cosmosDbScalerService.GetMetricSpec(GetScaledObjectRef(workloadIdentity), null);
+        }
+
+        [Theory]
+        [InlineData("endpoint", "connection")]
+        [InlineData("leaseEndpoint", "leaseConnection")]
+        public async Task GetMetricSpec_ThrowsOnMissingConnections(string firstMetadataKey, string secondMetadataKey)
+        {
+            var exception = await Assert.ThrowsAnyAsync<Exception>(
+                () => _cosmosDbScalerService.GetMetricSpec(GetScaledObjectRefWithoutMetadata(firstMetadataKey, secondMetadataKey), null));
+            Assert.IsType<JsonSerializationException>(exception.InnerException);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetMetricSpec_ReturnsMetricSpec(bool workloadIdentity)
+        {
+            GetMetricSpecResponse response = await _cosmosDbScalerService.GetMetricSpec(GetScaledObjectRef(workloadIdentity), null);
 
             Assert.Single(response.MetricSpecs);
 
@@ -127,11 +153,13 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("")]
-        [InlineData("custom-metric-name")]
-        public async Task GetMetricSpec_ReturnsSameMetricNameIfPassed(string requestMetricName)
+        [InlineData("", true)]
+        [InlineData("", false)]
+        [InlineData("custom-metric-name", true)]
+        [InlineData("custom-metric-name", false)]
+        public async Task GetMetricSpec_ReturnsSameMetricNameIfPassed(string requestMetricName, bool workloadIdentity)
         {
-            ScaledObjectRef request = GetScaledObjectRef();
+            ScaledObjectRef request = GetScaledObjectRef(workloadIdentity);
             request.ScalerMetadata["metricName"] = requestMetricName;
 
             GetMetricSpecResponse response = await _cosmosDbScalerService.GetMetricSpec(request, null);
@@ -140,11 +168,20 @@ namespace Keda.CosmosDb.Scaler.Tests
             Assert.Equal(requestMetricName, response.MetricSpecs[0].MetricName);
         }
 
-        [Fact]
-        public async Task GetMetricSpec_ReturnsNormalizedMetricName()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetMetricSpec_ReturnsNormalizedMetricName(bool workloadIdentity)
         {
-            ScaledObjectRef request = GetScaledObjectRef();
-            request.ScalerMetadata["leaseConnection"] = "AccountEndpoint=https://example.com:443/;AccountKey=ZHVtbXky";
+            ScaledObjectRef request = GetScaledObjectRef(workloadIdentity);
+            if (workloadIdentity)
+            {
+                request.ScalerMetadata["leaseEndpoint"] = "https://example.com:443";
+            }
+            else
+            {
+                request.ScalerMetadata["leaseConnection"] = "AccountEndpoint=https://example.com:443/;AccountKey=ZHVtbXky";
+            }
             request.ScalerMetadata["leaseDatabaseId"] = "Dummy.Lease.Database.Id";
             request.ScalerMetadata["leaseContainerId"] = "Dummy:Lease:Container:Id";
             request.ScalerMetadata["processorName"] = "Dummy%Processor%Name";
@@ -158,12 +195,12 @@ namespace Keda.CosmosDb.Scaler.Tests
                 response.MetricSpecs[0].MetricName);
         }
 
-        private static GetMetricsRequest GetGetMetricsRequest()
+        private static GetMetricsRequest GetGetMetricsRequest(bool workloadIdentity)
         {
             return new GetMetricsRequest
             {
                 MetricName = "dummy-metric-name",
-                ScaledObjectRef = GetScaledObjectRef(),
+                ScaledObjectRef = GetScaledObjectRef(workloadIdentity),
             };
         }
 
@@ -176,15 +213,20 @@ namespace Keda.CosmosDb.Scaler.Tests
             };
         }
 
-        private static ScaledObjectRef GetScaledObjectRefWithoutMetadata(string metadataKey)
+        private static ScaledObjectRef GetScaledObjectRefWithoutMetadata(params string[] metadataKeys)
         {
-            var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove(metadataKey);
+            var scaledObjectRef = GetScaledObjectRef(workloadIdentity: true);
+            // this is not technically correct but for sake of the test we need both connection and endpoint to be present
+            scaledObjectRef.ScalerMetadata["endpoint"] = "https://example1.com:443";
+            scaledObjectRef.ScalerMetadata["leaseEndpoint"] = "https://example2.com:443";
+
+            foreach (string metadataKey in metadataKeys)
+                scaledObjectRef.ScalerMetadata.Remove(metadataKey);
 
             return scaledObjectRef;
         }
 
-        private static ScaledObjectRef GetScaledObjectRef()
+        private static ScaledObjectRef GetScaledObjectRef(bool workloadIdentity = false)
         {
             var scaledObjectRef = new ScaledObjectRef
             {
@@ -194,10 +236,18 @@ namespace Keda.CosmosDb.Scaler.Tests
 
             MapField<string, string> scalerMetadata = scaledObjectRef.ScalerMetadata;
 
-            scalerMetadata["connection"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
+            if (workloadIdentity)
+            {
+                scalerMetadata["endpoint"] = "https://example1.com:443";
+                scalerMetadata["leaseEndpoint"] = "https://example2.com:443";
+            }
+            else
+            {
+                scalerMetadata["connection"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
+                scalerMetadata["leaseConnection"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";
+            }
             scalerMetadata["databaseId"] = "dummy-database-id";
             scalerMetadata["containerId"] = "dummy-container-id";
-            scalerMetadata["leaseConnection"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";
             scalerMetadata["leaseDatabaseId"] = "dummy-lease-database-id";
             scalerMetadata["leaseContainerId"] = "dummy-lease-container-id";
             scalerMetadata["processorName"] = "dummy-processor-name";
