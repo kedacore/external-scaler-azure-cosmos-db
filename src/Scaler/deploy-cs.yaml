@@ -13,7 +13,6 @@ spec:
   template:
     metadata:
       labels:
-        aadpodidbinding: "my-pod-identity"  # refer to https://learn.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity#create-a-pod-identity
         app: cosmosdb-scaler
     spec:
       containers:

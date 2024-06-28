@@ -1,0 +1,26 @@
+# Deploy order processor application.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmosdb-order-processor
+  namespace: default
+spec:
+  replicas: 1 # A replica is required to be up momentarily to initialize the change-feed.
+  selector:
+    matchLabels:
+      app: cosmosdb-order-processor
+  template:
+    metadata:
+      labels:
+        app: cosmosdb-order-processor
+    spec:
+      containers:
+        - name: cosmosdb-order-processor
+          image: <docker-id>/cosmosdb-order-processor:latest
+          imagePullPolicy: Always
+          env:
+            - name: CosmosDbConfig__Connection
+              value: <connection-string-of-monitored-container>
+            - name: CosmosDbConfig__LeaseConnection
+              value: <connection-string-of-lease-container>

@@ -12,17 +12,20 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 - [Azure Cosmos DB account](https://azure.microsoft.com/free/cosmos-db/)
 - [Docker Hub account](https://hub.docker.com/signup)
 - Kubernetes cluster
+- [Use pod-managed identities in Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 ## Testing sample application locally on Docker
+
+**Note** For simplicity, we will use the connection string method to connect locally (using docker) to Azure Cosmos DB. Once deployed to the AKS cluster the applications will use Managed Identity for Connection. Managed Identity is more secure as there is no risk of accidentally leaking the connection string.
 
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
 1. Run the below commands to build the Docker container images for order-generator and order-processor applications.
 
     ```text
-    # docker build --file .\src\Scaler.Demo\OrderGenerator\Dockerfile --force-rm --tag cosmosdb-order-generator .
-    # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
+    # docker build --file .\src\Scaler.Demo\OrderGenerator\Dockerfile --force-rm --tag cosmosdb-order-generator .\src
+    # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .\src
     ```
 
 1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below.
@@ -95,6 +98,10 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 1. Follow one of the steps on [Deploying KEDA](https://keda.sh/docs/deploy/) documentation page to deploy KEDA on your Kubernetes cluster.
 
+1. Cosmos DB supports key-based and managed identity-based authentication, both of which are supported by KEDA. Since pod managed identity is more secure, we will use it as the default. Steps for connection string-based authentication are also provided. To set up managed identity-based authentication in Cosmos DB and AKS, follow the steps below:
+    1. [Configure role-based access control with Microsoft Entra ID for your Azure Cosmos DB account](https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-setup-rbac)
+    1. [Use pod-managed identities in Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity)
+
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
 1. Build container image for the external scaler and push the image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
@@ -111,6 +118,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ```text
     kubectl apply --filename=src/Scaler/deploy.yaml
     ```
+    > **Note:** In case you are not using managed identity-based authentication in Cosmos DB then use `src/Scaler/deploy-cs.yaml` in the above step.
 
 ## Deploying sample application to cluster
 
@@ -127,6 +135,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy.yaml
     ```
+    
+    > **Note:** In case you are not using managed identity-based authentication in Cosmos DB then use `src/Scaler/deploy-cs.yaml` in the above step.
 
 1. Ensure that the order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for it, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
 
@@ -146,6 +156,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml
     ```
+
+    > **Note:** In case you are not using identity-based authentication in Cosmos DB then use `src/Scaler/deploy-scaledobject-cs.yaml` in the above step.
 
     > **Note** Ideally, we would have created `TriggerAuthentication` resource that would enable sharing of the connection strings as secrets between the scaled object and the target application. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).
 

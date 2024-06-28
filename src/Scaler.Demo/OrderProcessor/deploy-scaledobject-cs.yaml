@@ -13,10 +13,10 @@ spec:
     - type: external
       metadata:
         scalerAddress: cosmosdb-scaler.default:4050
-        endpoint: <endpoint-url-for-cosmosdb-account-monitored-container>
+        connection: <connection-string-of-monitored-container-account>
         databaseId: StoreDatabase
         containerId: OrderContainer
-        leaseEndpoint: <endpoint-url-for-cosmosdb-account-lease-container>
+        leaseConnection: <connection-string-of-lease-container-account>
         leaseDatabaseId: StoreDatabase
         leaseContainerId: OrderProcessorLeases
         processorName: OrderProcessor

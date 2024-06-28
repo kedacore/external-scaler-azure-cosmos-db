@@ -18,9 +18,11 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
+        [InlineData("endpoint")]
         [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
+        [InlineData("leaseEndpoint")]
         [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
@@ -50,9 +52,11 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
+        [InlineData("endpoint")]
         [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
+        [InlineData("leaseEndpoint")]
         [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
@@ -99,9 +103,11 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
+        [InlineData("endpoint")]
         [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
+        [InlineData("leaseEndpoint")]
         [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
@@ -144,7 +150,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         public async Task GetMetricSpec_ReturnsNormalizedMetricName()
         {
             ScaledObjectRef request = GetScaledObjectRef();
-            request.ScalerMetadata["leaseConnection"] = "AccountEndpoint=https://example.com:443/;AccountKey=ZHVtbXky";
+            request.ScalerMetadata["leaseEndpoint"] = "https://example.com:443/";
+            request.ScalerMetadata["leaseConnection"] = "https://example2.com:443/;AccountKey=ZHVtbXkx\\";
             request.ScalerMetadata["leaseDatabaseId"] = "Dummy.Lease.Database.Id";
             request.ScalerMetadata["leaseContainerId"] = "Dummy:Lease:Container:Id";
             request.ScalerMetadata["processorName"] = "Dummy%Processor%Name";
@@ -194,10 +201,12 @@ namespace Keda.CosmosDb.Scaler.Tests
 
             MapField<string, string> scalerMetadata = scaledObjectRef.ScalerMetadata;
 
-            scalerMetadata["connection"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
+            scalerMetadata["endpoint"] = "https://example1.com:443/";
+            scalerMetadata["connection"] = "https://example1.com:443/;AccountKey=ZHVtbXkx\\";
             scalerMetadata["databaseId"] = "dummy-database-id";
             scalerMetadata["containerId"] = "dummy-container-id";
-            scalerMetadata["leaseConnection"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";
+            scalerMetadata["leaseEndpoint"] = "https://example2.com:443/";
+            scalerMetadata["leaseConnection"] = "https://example2.com:443/;AccountKey=ZHVtbXkx\\";
             scalerMetadata["leaseDatabaseId"] = "dummy-lease-database-id";
             scalerMetadata["leaseContainerId"] = "dummy-lease-container-id";
             scalerMetadata["processorName"] = "dummy-processor-name";

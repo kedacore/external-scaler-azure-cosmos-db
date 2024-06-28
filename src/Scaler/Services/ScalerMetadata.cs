@@ -10,9 +10,11 @@ namespace Keda.CosmosDb.Scaler
         private string _metricName;
 
         public string Connection { get; set; }
+        public string Endpoint { get; set; }
         public string DatabaseId { get; set; }
         public string ContainerId { get; set; }
         public string LeaseConnection { get; set; }
+        public string LeaseEndpoint { get; set; }
         public string LeaseDatabaseId { get; set; }
         public string LeaseContainerId { get; set; }
         public string ProcessorName { get; set; }
@@ -39,8 +41,16 @@ namespace Keda.CosmosDb.Scaler
         {
             get
             {
-                var builder = new DbConnectionStringBuilder { ConnectionString = this.LeaseConnection };
-                return new Uri((string)builder["AccountEndpoint"]).Host;
+                if(!string.IsNullOrEmpty(this.LeaseConnection))
+                {
+                    var builder = new DbConnectionStringBuilder { ConnectionString = this.LeaseConnection };
+                    return new Uri((string)builder["AccountEndpoint"]).Host;
+                }
+                else
+                {
+                    return new Uri(this.LeaseEndpoint).Host;  
+                }
+
             }
         }
 

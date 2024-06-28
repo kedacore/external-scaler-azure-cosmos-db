@@ -7,6 +7,8 @@ using Keda.CosmosDb.Scaler.Demo.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Azure.Identity;
+using static Azure.Core.HttpHeader;
 
 namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 {
@@ -25,8 +27,49 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
-                .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
+            Database leaseDatabase;
+            CosmosClient cosmosClient;
+
+            if (string.IsNullOrEmpty(_cosmosDbConfig.Connection))
+            {
+                var credential = new DefaultAzureCredential();
+
+                cosmosClient = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.Endpoint, credential);
+            }
+            else
+            {
+                cosmosClient = new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.Connection);
+            }
+
+            //use connection string or credentials
+            if (string.IsNullOrEmpty(_cosmosDbConfig.LeaseConnection))
+            {
+
+                // maintain a single instance of CosmosClient per lifetime of the application.
+                if (_cosmosDbConfig.LeaseEndpoint == _cosmosDbConfig.Endpoint)
+                {
+                    leaseDatabase = await cosmosClient.CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId);
+                }
+                else
+                {
+                    var credential = new DefaultAzureCredential();
+                    leaseDatabase = await new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.LeaseEndpoint, credential)
+                        .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId); 
+                }
+            }
+            else
+            {
+                // maintain a single instance of CosmosClient per lifetime of the application.
+                if (_cosmosDbConfig.LeaseConnection == _cosmosDbConfig.Connection)
+                {
+                    leaseDatabase = await cosmosClient.CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId);
+                }
+                else
+                {
+                    leaseDatabase = await new Microsoft.Azure.Cosmos.CosmosClient(_cosmosDbConfig.LeaseConnection)
+                         .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId);
+                }
+            }
 
             Container leaseContainer = await leaseDatabase
                 .CreateContainerIfNotExistsAsync(
@@ -37,7 +80,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
-            _processor = new CosmosClient(_cosmosDbConfig.Connection)
+
+            _processor = cosmosClient
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)
