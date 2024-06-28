@@ -55,7 +55,7 @@ The external scaler calls Cosmos DB APIs to estimate the amount of changes pendi
 
 Create `ScaledObject` resource that contains the information about your application (the scale target), the external scaler service, Cosmos DB containers, and other scaling configuration values. Check [`ScaledObject` specification](https://keda.sh/docs/concepts/scaling-deployments/) and [`External` trigger specification](https://keda.sh/docs/scalers/external/) for information on different properties supported for `ScaledObject` and their allowed values.
 
-You can use file `deploy/deploy-scaledobject.yaml` as a template for creating the `ScaledObject`. The trigger metadata properties required to use the external scaler for Cosmos DB are described in [Trigger Specification](#trigger-specification) section below.
+You can use the `deploy/deploy-scaledobject.yaml` file as a template for creating the `ScaledObject` when connecting to Cosmos DB with a managed identity. If you are using a connection string for the connection, use the `deploy/deploy-scaledobject-cs.yaml` file as your template instead. The trigger metadata properties required to use the external scaler for Cosmos DB are described in [Trigger Specification](#trigger-specification) section below.
 
 > **Note:** If you are having trouble setting up the external scaler or the listener application, the step-by-step instructions for [deploying the sample application](./src/Scaler.Demo/README.md) might help.
 
@@ -87,7 +87,7 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`containerId`** - ID of the monitored container.
 
-- **`leaseEndpoint`** - Endpoint URL of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
+- **`leaseEndpoint`** - Endpoint URL of the Cosmos DB account that contains the lease container. This can be same or different from the value of `endpoint` metadata.
 
 - **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
 

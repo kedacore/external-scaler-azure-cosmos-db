@@ -17,6 +17,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 ## Testing sample application locally on Docker
 
+**Note** For simplicity, we will use the connection string method to connect locally (using docker) to Azure Cosmos DB. Once deployed to the AKS cluster the applications will use Managed Identity for Connection. Managed Identity is more secure as there is no risk of accidentally leaking the connection string.
+
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
 1. Run the below commands to build the Docker container images for order-generator and order-processor applications.
@@ -111,7 +113,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker push <docker-id>/cosmosdb-scaler:latest
     ```
 
-1. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application. 
+1. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application.
 
     ```text
     kubectl apply --filename=src/Scaler/deploy.yaml
@@ -154,6 +156,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml
     ```
+
     > **Note:** In case you are not using identity-based authentication in Cosmos DB then use `src/Scaler/deploy-scaledobject-cs.yaml` in the above step.
 
     > **Note** Ideally, we would have created `TriggerAuthentication` resource that would enable sharing of the connection strings as secrets between the scaled object and the target application. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).

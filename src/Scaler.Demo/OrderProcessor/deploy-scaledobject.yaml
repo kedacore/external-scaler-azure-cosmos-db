@@ -13,10 +13,10 @@ spec:
     - type: external
       metadata:
         scalerAddress: cosmosdb-scaler.default:4050
-        endpoint: <endpointURL-for-CosmosDB-account-monitored-container>
+        endpoint: <endpoint-url-for-cosmosdb-account-monitored-container>
         databaseId: StoreDatabase
         containerId: OrderContainer
-        leaseEndpoint: <endpointURL-for-CosmosDB-account-lease-container>
+        leaseEndpoint: <endpoint-url-for-cosmosdb-account-lease-container>
         leaseDatabaseId: StoreDatabase
         leaseContainerId: OrderProcessorLeases
         processorName: OrderProcessor
