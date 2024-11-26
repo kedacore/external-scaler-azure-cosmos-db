@@ -212,3 +212,27 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     2021-09-03 12:57:53 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
         Processing order ca17597f-7aa2-4b04-abd8-724139b2c370 - 1 unit(s) of Gloves bought by Donny Shanahan
     ```
+
+## Cleaning sample application from cluster
+
+1. Delete the scaled object and order-processor application.
+
+    ```text
+    # kubectl delete scaledobject cosmosdb-order-processor-scaledobject
+    # kubectl delete deployment cosmosdb-order-processor
+    ```
+
+1. Optionally, delete the external scaler and KEDA from cluster. The following commands assume that KEDA was installed with Helm.
+
+    ```text
+    # kubectl delete service cosmosdb-scaler
+    # kubectl delete deployment cosmosdb-scaler
+    # helm uninstall keda --namespace keda
+    # kubectl delete namespace keda
+    ```
+
+1. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
+
+    ```text
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator teardown
+    ```
