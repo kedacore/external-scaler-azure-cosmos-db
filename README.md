@@ -68,13 +68,15 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
     - type: external
       metadata:
         scalerAddress: external-scaler-azure-cosmos-db.keda:4050 # Mandatory. Address of the external scaler service.
-        connection: <connection>               # Mandatory. Connection string of Cosmos DB account with monitored container.
-        databaseId: <database-id>              # Mandatory. ID of Cosmos DB database containing monitored container.
-        containerId: <container-id>            # Mandatory. ID of monitored container.
-        leaseConnection: <lease-connection>    # Mandatory. Connection string of Cosmos DB account with lease container.
-        leaseDatabaseId: <lease-database-id>   # Mandatory. ID of Cosmos DB database containing lease container.
-        leaseContainerId: <lease-container-id> # Mandatory. ID of lease container.
-        processorName: <processor-name>        # Mandatory. Name of change-feed processor used by listener application.
+        connection: <connection>                                 # Mandatory. Connection string of Cosmos DB account with monitored container.
+        connectionFromEnv: <connectionFromEnvVariable>           # Optional. Used when connection is not used. (More secure)
+        databaseId: <database-id>                                # Mandatory. ID of Cosmos DB database containing monitored container.
+        containerId: <container-id>                              # Mandatory. ID of monitored container.
+        leaseConnection: <lease-connection>                      # Mandatory. Connection string of Cosmos DB account with lease container.
+        leaseConnectionFromEnv: <leaseConnectionFromEnvVariable> # Optional. Used when connection is not used. (More secure)
+        leaseDatabaseId: <lease-database-id>                     # Mandatory. ID of Cosmos DB database containing lease container.
+        leaseContainerId: <lease-container-id>                   # Mandatory. ID of lease container.
+        processorName: <processor-name>                          # Mandatory. Name of change-feed processor used by listener application.
 ```
 
 ### Parameter List
@@ -83,11 +85,15 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`connection`** - Connection string of the Cosmos DB account that contains the monitored container.
 
+- **`connectionFromEnv`** - ConnectionString is taken as an Environment Variable.
+
 - **`databaseId`** - ID of Cosmos DB database that contains the monitored container.
 
 - **`containerId`** - ID of the monitored container.
 
 - **`leaseConnection`** - Connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
+
+- **`leaseConnectionFromEnv`** - LeaseConnectionString is taken as an Environment Variable.
 
 - **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
 
