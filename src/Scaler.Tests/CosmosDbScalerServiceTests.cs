@@ -18,10 +18,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -50,10 +48,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -99,10 +95,8 @@ namespace Keda.CosmosDb.Scaler.Tests
         }
 
         [Theory]
-        [InlineData("connection")]
         [InlineData("databaseId")]
         [InlineData("containerId")]
-        [InlineData("leaseConnection")]
         [InlineData("leaseDatabaseId")]
         [InlineData("leaseContainerId")]
         [InlineData("processorName")]
@@ -156,6 +150,94 @@ namespace Keda.CosmosDb.Scaler.Tests
             Assert.Equal(
                 "cosmosdb-partitioncount-example-com-dummy-lease-database-id-dummy-lease-container-id-dummy-processor-name",
                 response.MetricSpecs[0].MetricName);
+        } 
+
+        [Fact]
+        public async Task IsActive_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("connection");
+            scaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.IsActive(scaledObjectRef, null));
+        }
+
+        [Fact]
+        public async Task IsActive_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
+            scaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.IsActive(scaledObjectRef, null));
+        }
+
+        [Fact]
+        public async Task GetMetrics_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        {
+            var request = GetGetMetricsRequest();
+            request.ScaledObjectRef.ScalerMetadata.Remove("connection");
+            request.ScaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.GetMetrics(request, null));
+        }
+
+        [Fact]
+        public async Task GetMetrics_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
+        {
+            var request = GetGetMetricsRequest();
+            request.ScaledObjectRef.ScalerMetadata.Remove("leaseConnection");
+            request.ScaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.GetMetrics(request, null));
+        }
+
+        [Fact]
+        public async Task GetMetricSpec_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("connection");
+            scaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.GetMetricSpec(scaledObjectRef, null));
+        }
+
+        [Fact]
+        public async Task GetMetricSpec_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
+            scaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
+
+            await Assert.ThrowsAsync<JsonSerializationException>(
+                () => _cosmosDbScalerService.GetMetricSpec(scaledObjectRef, null));
+        }
+
+        [Fact]
+        public async Task IsActive_UsesConnectionFromEnvIfConnectionMissing()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("connection");
+            
+            _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
+            IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
+            Assert.True(response.Result);
+        }
+
+        [Fact]
+        public async Task IsActive_UsesLeaseConnectionFromEnvIfLeaseConnectionMissing()
+        {
+            var scaledObjectRef = GetScaledObjectRef();
+            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
+           
+            _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
+            IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
+            Assert.True(response.Result);
         }
 
         private static GetMetricsRequest GetGetMetricsRequest()
@@ -195,9 +277,11 @@ namespace Keda.CosmosDb.Scaler.Tests
             MapField<string, string> scalerMetadata = scaledObjectRef.ScalerMetadata;
 
             scalerMetadata["connection"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
+            scalerMetadata["connectionFromEnv"] = "dummy-connection-from-env";
             scalerMetadata["databaseId"] = "dummy-database-id";
             scalerMetadata["containerId"] = "dummy-container-id";
             scalerMetadata["leaseConnection"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";
+            scalerMetadata["leaseConnectionFromEnv"] = "dummy-lease-connection-from-env";
             scalerMetadata["leaseDatabaseId"] = "dummy-lease-database-id";
             scalerMetadata["leaseContainerId"] = "dummy-lease-container-id";
             scalerMetadata["processorName"] = "dummy-processor-name";

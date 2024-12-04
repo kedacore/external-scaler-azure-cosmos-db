@@ -4,17 +4,33 @@ using Newtonsoft.Json;
 
 namespace Keda.CosmosDb.Scaler
 {
-    [JsonObject(ItemRequired = Required.Always)]
+    [JsonObject]
     internal sealed class ScalerMetadata
     {
-        private string _metricName;
-
-        public string Connection { get; set; }
+        private string _metricName; // Private backing field for MetricName property
+        private string _connection; // Private backing field for Connection property
+        public string ConnectionFromEnv { get; set; }
+        public string Connection
+        {
+            get => string.IsNullOrEmpty(_connection) ? ConnectionFromEnv : _connection;
+            set => _connection = value;
+        }
+        [JsonProperty(Required = Required.Always)]
         public string DatabaseId { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string ContainerId { get; set; }
-        public string LeaseConnection { get; set; }
+        public string LeaseConnectionFromEnv { get; set; }
+        private string _leaseConnection; // Private backing field for LeaseConnection property
+        public string LeaseConnection
+        {
+            get => string.IsNullOrEmpty(_leaseConnection) ? LeaseConnectionFromEnv : _leaseConnection;
+            set => _leaseConnection = value;
+        }
+        [JsonProperty(Required = Required.Always)]
         public string LeaseDatabaseId { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string LeaseContainerId { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string ProcessorName { get; set; }
 
         [JsonProperty(Required = Required.DisallowNull)]
@@ -46,7 +62,19 @@ namespace Keda.CosmosDb.Scaler
 
         public static ScalerMetadata Create(ScaledObjectRef scaledObjectRef)
         {
-            return JsonConvert.DeserializeObject<ScalerMetadata>(scaledObjectRef.ScalerMetadata.ToString());
+            var metadata = JsonConvert.DeserializeObject<ScalerMetadata>(scaledObjectRef.ScalerMetadata.ToString());
+
+            if (string.IsNullOrEmpty(metadata.Connection) && string.IsNullOrEmpty(metadata.ConnectionFromEnv))
+            {
+                throw new JsonSerializationException("Required property 'Connection' not found in JSON.");
+            }
+
+            if (string.IsNullOrEmpty(metadata.LeaseConnection) && string.IsNullOrEmpty(metadata.LeaseConnectionFromEnv))
+            {
+                throw new JsonSerializationException("Required property 'LeaseConnection' not found in JSON.");
+            }
+
+            return metadata;
         }
     }
 }
