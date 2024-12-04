@@ -277,11 +277,11 @@ namespace Keda.CosmosDb.Scaler.Tests
             MapField<string, string> scalerMetadata = scaledObjectRef.ScalerMetadata;
 
             scalerMetadata["connection"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
-            scalerMetadata["connectionFromEnv"] = "dummy-connection-from-env";
+            scalerMetadata["connectionFromEnv"] = "dummy-connection-from-env";  //KEDA external scaler will receive the actual connection string.
             scalerMetadata["databaseId"] = "dummy-database-id";
             scalerMetadata["containerId"] = "dummy-container-id";
             scalerMetadata["leaseConnection"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";
-            scalerMetadata["leaseConnectionFromEnv"] = "dummy-lease-connection-from-env";
+            scalerMetadata["leaseConnectionFromEnv"] = "dummy-lease-connection-from-env";  //KEDA external scaler will receive the actual connection string.
             scalerMetadata["leaseDatabaseId"] = "dummy-lease-database-id";
             scalerMetadata["leaseContainerId"] = "dummy-lease-container-id";
             scalerMetadata["processorName"] = "dummy-processor-name";
