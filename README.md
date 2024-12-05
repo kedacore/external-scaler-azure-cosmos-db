@@ -68,11 +68,11 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
     - type: external
       metadata:
         scalerAddress: external-scaler-azure-cosmos-db.keda:4050 # Mandatory. Address of the external scaler service.
-        connection: <connection>                                 # Mandatory. Connection string of Cosmos DB account with monitored container.
+        connection: <connection>                                 # Optional. Connection string of Cosmos DB account with monitored container. Provide connection or connectionFromEnv.
         connectionFromEnv: <connectionFromEnvVariable>           # Optional. Used when connection is not used. (More secure)
         databaseId: <database-id>                                # Mandatory. ID of Cosmos DB database containing monitored container.
         containerId: <container-id>                              # Mandatory. ID of monitored container.
-        leaseConnection: <lease-connection>                      # Mandatory. Connection string of Cosmos DB account with lease container.
+        leaseConnection: <lease-connection>                      # Optional. Connection string of Cosmos DB account with lease container. Provide leaseConnection or leaseConnectionFromEnv
         leaseConnectionFromEnv: <leaseConnectionFromEnvVariable> # Optional. Used when connection is not used. (More secure)
         leaseDatabaseId: <lease-database-id>                     # Mandatory. ID of Cosmos DB database containing lease container.
         leaseContainerId: <lease-container-id>                   # Mandatory. ID of lease container.
