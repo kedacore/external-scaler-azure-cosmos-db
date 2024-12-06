@@ -152,94 +152,60 @@ namespace Keda.CosmosDb.Scaler.Tests
                 response.MetricSpecs[0].MetricName);
         } 
 
-        [Fact]
-        public async Task IsActive_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        [Theory]
+        [InlineData("connection", "connectionFromEnv")]
+        [InlineData("leaseConnection", "leaseConnectionFromEnv")]
+        public async Task IsActive_OnMissingMetadataForEitherOfTheConnections(string primaryMetadataKey, string secondaryMetadataKey)
+        {
+            var scaledObjectRef = GetScaledObjectRefWithoutMetadata(primaryMetadataKey);
+            _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
+            IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
+            Assert.True(response.Result);
+
+            scaledObjectRef = GetScaledObjectRefWithoutMetadata(secondaryMetadataKey);
+            response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
+            Assert.True(response.Result);
+        }
+
+        [Theory]
+        [InlineData("connection", "connectionFromEnv")]
+        [InlineData("leaseConnection", "leaseConnectionFromEnv")]
+        public async Task IsActive_ThrowsOnMissingConnections(string primaryMetadataKey, string secondaryMetadataKey)
         {
             var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("connection");
-            scaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+            scaledObjectRef.ScalerMetadata.Remove(primaryMetadataKey);
+            scaledObjectRef.ScalerMetadata.Remove(secondaryMetadataKey);
 
             await Assert.ThrowsAsync<JsonSerializationException>(
                 () => _cosmosDbScalerService.IsActive(scaledObjectRef, null));
         }
 
-        [Fact]
-        public async Task IsActive_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
-        {
-            var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
-            scaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
-
-            await Assert.ThrowsAsync<JsonSerializationException>(
-                () => _cosmosDbScalerService.IsActive(scaledObjectRef, null));
-        }
-
-        [Fact]
-        public async Task GetMetrics_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        [Theory]
+        [InlineData("connection", "connectionFromEnv")]
+        [InlineData("leaseConnection", "leaseConnectionFromEnv")]
+        public async Task GetMetrics_ThrowsOnMissingConnections(string primaryMetadataKey, string secondaryMetadataKey)
         {
             var request = GetGetMetricsRequest();
-            request.ScaledObjectRef.ScalerMetadata.Remove("connection");
-            request.ScaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+            request.ScaledObjectRef.ScalerMetadata.Remove(primaryMetadataKey);
+            request.ScaledObjectRef.ScalerMetadata.Remove(secondaryMetadataKey);
 
             await Assert.ThrowsAsync<JsonSerializationException>(
                 () => _cosmosDbScalerService.GetMetrics(request, null));
         }
 
-        [Fact]
-        public async Task GetMetrics_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
-        {
-            var request = GetGetMetricsRequest();
-            request.ScaledObjectRef.ScalerMetadata.Remove("leaseConnection");
-            request.ScaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
-
-            await Assert.ThrowsAsync<JsonSerializationException>(
-                () => _cosmosDbScalerService.GetMetrics(request, null));
-        }
-
-        [Fact]
-        public async Task GetMetricSpec_ThrowsOnMissingConnectionAndConnectionFromEnv()
+        [Theory]
+        [InlineData("connection", "connectionFromEnv")]
+        [InlineData("leaseConnection", "leaseConnectionFromEnv")]
+        public async Task GetMetricSpec_ThrowsOnMissingConnections(string primaryMetadataKey, string secondaryMetadataKey)
         {
             var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("connection");
-            scaledObjectRef.ScalerMetadata.Remove("connectionFromEnv");
+            scaledObjectRef.ScalerMetadata.Remove(primaryMetadataKey);
+            scaledObjectRef.ScalerMetadata.Remove(secondaryMetadataKey);
 
             await Assert.ThrowsAsync<JsonSerializationException>(
                 () => _cosmosDbScalerService.GetMetricSpec(scaledObjectRef, null));
         }
-
-        [Fact]
-        public async Task GetMetricSpec_ThrowsOnMissingLeaseConnectionAndLeaseConnectionFromEnv()
-        {
-            var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
-            scaledObjectRef.ScalerMetadata.Remove("leaseConnectionFromEnv");
-
-            await Assert.ThrowsAsync<JsonSerializationException>(
-                () => _cosmosDbScalerService.GetMetricSpec(scaledObjectRef, null));
-        }
-
-        [Fact]
-        public async Task IsActive_UsesConnectionFromEnvIfConnectionMissing()
-        {
-            var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("connection");
-            
-            _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
-            IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
-            Assert.True(response.Result);
-        }
-
-        [Fact]
-        public async Task IsActive_UsesLeaseConnectionFromEnvIfLeaseConnectionMissing()
-        {
-            var scaledObjectRef = GetScaledObjectRef();
-            scaledObjectRef.ScalerMetadata.Remove("leaseConnection");
-           
-            _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
-            IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
-            Assert.True(response.Result);
-        }
-
+        
         private static GetMetricsRequest GetGetMetricsRequest()
         {
             return new GetMetricsRequest
