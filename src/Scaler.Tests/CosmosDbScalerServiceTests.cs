@@ -153,17 +153,15 @@ namespace Keda.CosmosDb.Scaler.Tests
         } 
 
         [Theory]
-        [InlineData("connection", "connectionFromEnv")]
-        [InlineData("leaseConnection", "leaseConnectionFromEnv")]
-        public async Task IsActive_OnMissingMetadataForEitherOfTheConnections(string primaryMetadataKey, string secondaryMetadataKey)
+        [InlineData("connection")]
+        [InlineData("connectionFromEnv")]
+        [InlineData("leaseConnection")]
+        [InlineData("leaseConnectionFromEnv")]
+        public async Task IsActive_OnMissingMetadataForEitherOfTheConnections(string metadataKey)
         {
-            var scaledObjectRef = GetScaledObjectRefWithoutMetadata(primaryMetadataKey);
+            var scaledObjectRef = GetScaledObjectRefWithoutMetadata(metadataKey);
             _metricProviderMock.Setup(provider => provider.GetPartitionCountAsync(It.IsAny<ScalerMetadata>())).ReturnsAsync(1L);
             IsActiveResponse response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
-            Assert.True(response.Result);
-
-            scaledObjectRef = GetScaledObjectRefWithoutMetadata(secondaryMetadataKey);
-            response = await _cosmosDbScalerService.IsActive(scaledObjectRef, null);
             Assert.True(response.Result);
         }
 
@@ -205,7 +203,7 @@ namespace Keda.CosmosDb.Scaler.Tests
             await Assert.ThrowsAsync<JsonSerializationException>(
                 () => _cosmosDbScalerService.GetMetricSpec(scaledObjectRef, null));
         }
-        
+
         private static GetMetricsRequest GetGetMetricsRequest()
         {
             return new GetMetricsRequest
