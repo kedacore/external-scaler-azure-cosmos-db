@@ -66,12 +66,12 @@ namespace Keda.CosmosDb.Scaler
 
             if (string.IsNullOrEmpty(metadata.Connection) && string.IsNullOrEmpty(metadata.ConnectionFromEnv))
             {
-                throw new JsonSerializationException("Required property 'Connection' not found in JSON.");
+                throw new JsonSerializationException("Required property 'Connection' or 'ConnectionFromEnv' not found in JSON.");
             }
 
             if (string.IsNullOrEmpty(metadata.LeaseConnection) && string.IsNullOrEmpty(metadata.LeaseConnectionFromEnv))
             {
-                throw new JsonSerializationException("Required property 'LeaseConnection' not found in JSON.");
+                throw new JsonSerializationException("Required property 'LeaseConnection' or 'LeaseConnectionFromEnv' not found in JSON.");
             }
 
             return metadata;
