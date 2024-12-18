@@ -9,14 +9,14 @@ namespace Keda.CosmosDb.Scaler
         // maintain a single instance of CosmosClient per lifetime of the application.
         private readonly ConcurrentDictionary<string, CosmosClient> _cosmosClientCache = new();
 
-        public CosmosClient GetCosmosClient(string connection)
+        public CosmosClient GetCosmosClient(string connectionFromEnv)
         {
-            return _cosmosClientCache.GetOrAdd(connection, CreateCosmosClient);
+            return _cosmosClientCache.GetOrAdd(connectionFromEnv, CreateCosmosClient);
         }
 
-        private CosmosClient CreateCosmosClient(string connection)
+        private CosmosClient CreateCosmosClient(string connectionFromEnv)
         {
-            return new CosmosClient(connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
+            return new CosmosClient(connectionFromEnv, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
         }
     }
 }
