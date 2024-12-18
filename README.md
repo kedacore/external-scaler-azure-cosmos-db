@@ -81,13 +81,13 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
 
 - **`scalerAddress`** - Address of the external scaler service. This would be in format `<scaler-name>.<scaler-namespace>:<port>`. If you installed Azure Cosmos DB external scaler Helm chart in `keda` namespace and did not specify custom values, the metadata value would be `external-scaler-azure-cosmos-db.keda:4050`.
 
-- **`connectionFromEnv`** - Environment variable for the connection string of the Cosmos DB account that contains the monitored container.
+- **`connectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the monitored container.
 
 - **`databaseId`** - ID of Cosmos DB database that contains the monitored container.
 
 - **`containerId`** - ID of the monitored container.
 
-- **`leaseConnectionFromEnv`** - Environment variable for the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
+- **`leaseConnectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
 
 - **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
 
