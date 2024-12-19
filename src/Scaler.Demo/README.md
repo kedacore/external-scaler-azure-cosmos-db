@@ -141,7 +141,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ...
     ```
 
-1. In the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`, update the values of connection strings to point to the test Cosmos DB account and apply it.
+1. Apply the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`
 
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml

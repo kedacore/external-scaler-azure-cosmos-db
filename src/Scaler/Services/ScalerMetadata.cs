@@ -9,9 +9,11 @@ namespace Keda.CosmosDb.Scaler
     {
         private string _metricName;
 
+        [JsonProperty("ConnectionFromEnv")]
         public string Connection { get; set; }
         public string DatabaseId { get; set; }
         public string ContainerId { get; set; }
+        [JsonProperty("LeaseConnectionFromEnv")]
         public string LeaseConnection { get; set; }
         public string LeaseDatabaseId { get; set; }
         public string LeaseContainerId { get; set; }
