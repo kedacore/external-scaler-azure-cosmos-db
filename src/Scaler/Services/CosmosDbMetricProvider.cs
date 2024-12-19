@@ -24,11 +24,11 @@ namespace Keda.CosmosDb.Scaler
             try
             {
                 Container leaseContainer = _factory
-                    .GetCosmosClient(scalerMetadata.LeaseConnectionFromEnv)
+                    .GetCosmosClient(scalerMetadata.LeaseConnection)
                     .GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
 
                 ChangeFeedEstimator estimator = _factory
-                    .GetCosmosClient(scalerMetadata.ConnectionFromEnv)
+                    .GetCosmosClient(scalerMetadata.Connection)
                     .GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId)
                     .GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
 
