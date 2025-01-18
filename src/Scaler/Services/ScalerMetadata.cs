@@ -14,61 +14,59 @@ namespace Keda.CosmosDb.Scaler
         /// <summary>
         /// ID of Cosmos DB database containing monitored container.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         [JsonRequired]
         public string DatabaseId { get; set; }
 
         /// <summary>
         /// ID of monitored container.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public string ContainerId { get; set; }
 
         /// <summary>
         /// ID of Cosmos DB database containing lease container.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public string LeaseDatabaseId { get; set; }
 
         /// <summary>
         /// ID of lease container.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public string LeaseContainerId { get; set; }
 
         // Connection String properties
         /// <summary>
         /// Environment variable for the connection string of Cosmos DB account with monitored container.
         /// </summary>
-        [JsonProperty("ConnectionFromEnv")]
+        [JsonProperty("ConnectionFromEnv", Required = Required.Default)]
         public string Connection { get; set; }
 
         /// <summary>
         /// Environment variable for the connection string of Cosmos DB account with lease container.
         /// </summary>
-        [JsonProperty("LeaseConnectionFromEnv")]
+        [JsonProperty("LeaseConnectionFromEnv", Required = Required.Default)]
         public string LeaseConnection { get; set; }
 
         // Managed Identity properties
         /// <summary>
         /// Account endpoint of the CosmosDB account containing the monitored container.
         /// </summary>
+        [JsonProperty(Required = Required.Default)]
         public string Endpoint { get; set; }
 
         /// <summary>
         /// Account endpoint of the CosmosDB account containing the lease container.
         /// </summary>
+        [JsonProperty(Required = Required.Default)]
         public string LeaseEndpoint { get; set; }
 
         /// <summary>
         /// ClientId of the identity to be used. System assigned identity is used, if this is null.
         /// </summary>
+        [JsonProperty(Required = Required.Default)]
         public string ClientId { get; set; }
 
         /// <summary>
         /// Name of change-feed processor used by listener application.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public string ProcessorName { get; set; }
 
         [JsonProperty(Required = Required.DisallowNull)]
