@@ -1,5 +1,6 @@
 using System;
 using System.Data.Common;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace Keda.CosmosDb.Scaler
@@ -9,14 +10,65 @@ namespace Keda.CosmosDb.Scaler
     {
         private string _metricName;
 
+        // Database & Container properties
+        /// <summary>
+        /// ID of Cosmos DB database containing monitored container.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        [JsonRequired]
+        public string DatabaseId { get; set; }
+
+        /// <summary>
+        /// ID of monitored container.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string ContainerId { get; set; }
+
+        /// <summary>
+        /// ID of Cosmos DB database containing lease container.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string LeaseDatabaseId { get; set; }
+
+        /// <summary>
+        /// ID of lease container.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string LeaseContainerId { get; set; }
+
+        // Connection String properties
+        /// <summary>
+        /// Environment variable for the connection string of Cosmos DB account with monitored container.
+        /// </summary>
         [JsonProperty("ConnectionFromEnv")]
         public string Connection { get; set; }
-        public string DatabaseId { get; set; }
-        public string ContainerId { get; set; }
+
+        /// <summary>
+        /// Environment variable for the connection string of Cosmos DB account with lease container.
+        /// </summary>
         [JsonProperty("LeaseConnectionFromEnv")]
         public string LeaseConnection { get; set; }
-        public string LeaseDatabaseId { get; set; }
-        public string LeaseContainerId { get; set; }
+
+        // Managed Identity properties
+        /// <summary>
+        /// Account endpoint of the CosmosDB account containing the monitored container.
+        /// </summary>
+        public string Endpoint { get; set; }
+
+        /// <summary>
+        /// Account endpoint of the CosmosDB account containing the lease container.
+        /// </summary>
+        public string LeaseEndpoint { get; set; }
+
+        /// <summary>
+        /// ClientId of the identity to be used. System assigned identity is used, if this is null.
+        /// </summary>
+        public string ClientId { get; set; }
+
+        /// <summary>
+        /// Name of change-feed processor used by listener application.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
         public string ProcessorName { get; set; }
 
         [JsonProperty(Required = Required.DisallowNull)]
@@ -41,8 +93,29 @@ namespace Keda.CosmosDb.Scaler
         {
             get
             {
-                var builder = new DbConnectionStringBuilder { ConnectionString = this.LeaseConnection };
-                return new Uri((string)builder["AccountEndpoint"]).Host;
+                if (!string.IsNullOrWhiteSpace(Endpoint))
+                {
+                    return new Uri(this.LeaseEndpoint).Host;
+                }
+                else
+                {
+                    var builder = new DbConnectionStringBuilder { ConnectionString = LeaseConnection };
+                    return new Uri((string)builder["AccountEndpoint"]).Host;
+                }
+            }
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (string.IsNullOrEmpty(Connection) && string.IsNullOrEmpty(Endpoint))
+            {
+                throw new JsonSerializationException("Both Connection and Endpoint are missing.");
+            }
+
+            if (string.IsNullOrEmpty(LeaseConnection) && string.IsNullOrEmpty(LeaseEndpoint))
+            {
+                throw new JsonSerializationException("Both LeaseConnection and LeaseEndpoint are missing.");
             }
         }
 
