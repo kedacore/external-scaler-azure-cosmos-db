@@ -10,6 +10,8 @@ spec:
   selector:
     matchLabels:
       app: cosmosdb-scaler
+      # Optional: Use Workload Identity for authentication. Refer https://azure.github.io/azure-workload-identity/docs/topics/service-account-labels-and-annotations.html for more details.
+      azure.workload.identity/use: true 
   template:
     metadata:
       labels:

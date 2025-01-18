@@ -1,0 +1,22 @@
+# Template scaled-object for using KEDA external scaler for Azure Cosmos DB, using connection strings.
+
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: <scaledobject-name>
+  namespace: default
+spec:
+  pollingInterval: 20
+  scaleTargetRef:
+    name: <application-deployment-name>
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: external-scaler-azure-cosmos-db.keda:4050
+        databaseId: <database-id>
+        containerId: <container-id>
+        leaseDatabaseId: <lease-database-id>
+        leaseContainerId: <lease-container-id>
+        connectionFromEnv: <env-variable-for-connection-string-of-monitored-container-account>
+        leaseConnectionFromEnv: <env-variable-for-connection-string-of-lease-container-account>
+        processorName: <processor-name>
