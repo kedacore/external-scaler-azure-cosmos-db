@@ -55,7 +55,7 @@ The external scaler calls Cosmos DB APIs to estimate the amount of changes pendi
 
 Create `ScaledObject` resource that contains the information about your application (the scale target), the external scaler service, Cosmos DB containers, and other scaling configuration values. Check [`ScaledObject` specification](https://keda.sh/docs/concepts/scaling-deployments/) and [`External` trigger specification](https://keda.sh/docs/scalers/external/) for information on different properties supported for `ScaledObject` and their allowed values.
 
-You can use file `deploy/deploy-scaledobject.yaml` as a template for creating the `ScaledObject`. The trigger metadata properties required to use the external scaler for Cosmos DB are described in [Trigger Specification](#trigger-specification) section below.
+You can use the files in the `deploy` folder as templates for creating `ScaledObject`s. The trigger metadata properties required to use the external scaler for Cosmos DB are described in [Trigger Specification](#trigger-specification) section below.
 
 > **Note:** If you are having trouble setting up the external scaler or the listener application, the step-by-step instructions for [deploying the sample application](./src/Scaler.Demo/README.md) might help.
 
@@ -68,31 +68,40 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
     - type: external
       metadata:
         scalerAddress: external-scaler-azure-cosmos-db.keda:4050    # Mandatory. Address of the external scaler service.
-        connectionFromEnv: <env-variable-for-connection>            # Mandatory. Environment variable for the connection string of Cosmos DB account with monitored container.
+
+        # Database & Container proeprties
         databaseId: <database-id>                                   # Mandatory. ID of Cosmos DB database containing monitored container.
         containerId: <container-id>                                 # Mandatory. ID of monitored container.
-        leaseConnectionFromEnv: <env-variable-for-lease-connection> # Mandatory. Environment variable for the connection string of Cosmos DB account with lease container.
         leaseDatabaseId: <lease-database-id>                        # Mandatory. ID of Cosmos DB database containing lease container.
         leaseContainerId: <lease-container-id>                      # Mandatory. ID of lease container.
+
+        # Connection String properties.
+        connectionFromEnv: <env-variable-for-connection>            # Optional. Environment variable for the connection string of Cosmos DB account with monitored container.
+        leaseConnectionFromEnv: <env-variable-for-lease-connection> # Optional. Environment variable for the connection string of Cosmos DB account with lease container.
+
+        # Managed Identity properties
+        endpoint: <endpoint>                                        # Optional. Account endpoint of the CosmosDB account containing the monitored container.
+        leaseEndpoint: <lease-endpoint>                             # Optional. Account endpoint of the CosmosDB account containing the lease container.
+        clientId: <client-Id>                                       # Optional. ClientId of the identity to be used. System assigned identity is used, if this is null.
+
         processorName: <processor-name>                             # Mandatory. Name of change-feed processor used by listener application.
 ```
 
 ### Parameter List
 
 - **`scalerAddress`** - Address of the external scaler service. This would be in format `<scaler-name>.<scaler-namespace>:<port>`. If you installed Azure Cosmos DB external scaler Helm chart in `keda` namespace and did not specify custom values, the metadata value would be `external-scaler-azure-cosmos-db.keda:4050`.
-
-- **`connectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the monitored container.
-
-- **`databaseId`** - ID of Cosmos DB database that contains the monitored container.
-
-- **`containerId`** - ID of the monitored container.
-
-- **`leaseConnectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata.
-
-- **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
-
-- **`leaseContainerId`** - ID of the lease container containing the change feeds.
-
+- **Database & Container properties:**
+  - **`databaseId`** - ID of Cosmos DB database that contains the monitored container.
+  - **`containerId`** - ID of the monitored container.
+  - **`leaseDatabaseId`** - ID of Cosmos DB database that contains the lease container. This can be same or different from the value of `databaseId` metadata.
+  - **`leaseContainerId`** - ID of the lease container containing the change feeds.
+- **Connection String Properties:**
+  - **`connectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the monitored container. You can also opt for an identity-based connection instead, refer to the `endpoint` property.
+  - **`leaseConnectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata. You can also opt for an identity-based connection instead, refer to the `leaseEndpoint` property.
+- **Managed Identity Properties:**
+  - **`endpoint`** - Account endpoint of the CosmosDB account containing the monitored container.
+  - **`leaseEndpoint`** - Account endpoint of the CosmosDB account containing the lease container. This can be same or different from the value of `endpoint` metadata.
+  - **`clientId`** - ClientId of the identity to be used. System assigned identity is used, if this is null.
 - **`processorName`** - Name of change-feed processor used by listener application. For more information on this, you can refer to [Implementing the change feed processor](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) section.
 
 > **Note** Ideally, we would have created `TriggerAuthentication` resource that would have prevented us from adding the connection strings in plain text in the `ScaledObject` trigger metadata. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).
