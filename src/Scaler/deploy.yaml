@@ -10,15 +10,16 @@ spec:
   selector:
     matchLabels:
       app: cosmosdb-scaler
-      # Optional: Use Workload Identity for authentication. Refer https://azure.github.io/azure-workload-identity/docs/topics/service-account-labels-and-annotations.html for more details.
-      azure.workload.identity/use: true 
+      azure.workload.identity/use: "true"
   template:
     metadata:
       labels:
         app: cosmosdb-scaler
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: sa
       containers:
-        - image: <docker-id>/cosmosdb-scaler:latest
+        - image: vishal7991/cosmosdb-scaler:dev
           imagePullPolicy: Always
           name: cosmosdb-scaler
           ports:
