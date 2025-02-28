@@ -23,11 +23,23 @@ namespace Keda.CosmosDb.Scaler
             if (useCredentials)
             {
                 var credential = GetChainedCredential(clientId);
-                return new CosmosClient(endpointOrConnection, credential, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway, ApplicationName = _applicationName });
+                return new CosmosClient(
+                    endpointOrConnection, 
+                    credential, 
+                    new CosmosClientOptions { 
+                        ConnectionMode = ConnectionMode.Gateway,
+                        ApplicationName = _applicationName, 
+                        LimitToEndpoint = true
+                    });
             }
             else
             {
-                return new CosmosClient(endpointOrConnection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway, ApplicationName = _applicationName });
+                return new CosmosClient(
+                    endpointOrConnection, 
+                    new CosmosClientOptions { 
+                        ConnectionMode = ConnectionMode.Gateway,
+                        ApplicationName = _applicationName 
+                    });
             }
         }
 
@@ -39,11 +51,18 @@ namespace Keda.CosmosDb.Scaler
         /// <returns></returns>
         private TokenCredential GetChainedCredential(string clientId)
         {
-            var managedIdentityCredentials = new ManagedIdentityCredential(clientId: clientId);
+            var options = new DefaultAzureCredentialOptions {
+                    ManagedIdentityClientId = clientId,
+                    ExcludeInteractiveBrowserCredential = true 
+            };
+
             var workloadIdentityCredentials = new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { ClientId = clientId });
             var azCliCredentials = new AzureCliCredential();
 
-            return new ChainedTokenCredential(managedIdentityCredentials, workloadIdentityCredentials, azCliCredentials);
+            return new ChainedTokenCredential(
+                new DefaultAzureCredential(options), 
+                workloadIdentityCredentials, 
+                azCliCredentials);
         }
     }
 }
