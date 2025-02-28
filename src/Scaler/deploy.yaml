@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: sa
       containers:
-        - image: vishal7991/cosmosdb-scaler:dev
+        - image: <docker-id>/cosmosdb-scaler:latest
           imagePullPolicy: Always
           name: cosmosdb-scaler
           ports:

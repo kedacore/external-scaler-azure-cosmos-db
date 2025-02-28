@@ -17,6 +17,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         private ChangeFeedProcessor _processor;
 
+        public static string _applicationName = "cosmosdb-order-processor";
+
         public Worker(CosmosDbConfig cosmosDbConfig, ILogger<Worker> logger)
         {
             _cosmosDbConfig = cosmosDbConfig ?? throw new ArgumentNullException(nameof(cosmosDbConfig));
@@ -25,19 +27,24 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            Database leaseDatabase = await new CosmosClient(_cosmosDbConfig.LeaseConnection)
+            Database leaseDatabase = await DemoHelper.CreateCosmosClient(
+                    _cosmosDbConfig.Connection,
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID),
+                    _cosmosDbConfig.MSIClientID, _applicationName)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
 
             Container leaseContainer = await leaseDatabase
                 .CreateContainerIfNotExistsAsync(
                     new ContainerProperties(_cosmosDbConfig.LeaseContainerId, partitionKeyPath: "/id"),
-                    throughput: 400,
                     cancellationToken: cancellationToken);
 
             // Change feed processor instance name should be unique for each container application.
             string instanceName = $"Instance-{Dns.GetHostName()}";
 
-            _processor = new CosmosClient(_cosmosDbConfig.Connection)
+            _processor = DemoHelper.CreateCosmosClient(
+                    _cosmosDbConfig.Connection,
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID),
+                    _cosmosDbConfig.MSIClientID, _applicationName)
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)
