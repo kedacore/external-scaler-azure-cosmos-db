@@ -15,10 +15,11 @@ spec:
     - type: external
       metadata:
         scalerAddress: cosmosdb-scaler.default:4050
-        connectionFromEnv: CosmosDbConfig__Connection
         databaseId: StoreDatabase
         containerId: OrderContainer
-        leaseConnectionFromEnv: CosmosDbConfig__LeaseConnection
         leaseDatabaseId: StoreDatabase
         leaseContainerId: OrderProcessorLeases
         processorName: OrderProcessor
+        endpoint: "<>"
+        leaseEndpoint: "<>"
+        clientId: "145385f0-1987-4ffa-a9c5-a84731220641"
