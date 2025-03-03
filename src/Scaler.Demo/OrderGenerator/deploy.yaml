@@ -42,3 +42,5 @@ spec:
               value: "1000"
             - name: CosmosDbConfig__IsSingleArticle
               value: "false"
+            - name: CosmosDbConfig__Action
+              value: "setup" #options: setup, teardown, generate

@@ -18,6 +18,8 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
         public int OrderCount { get; set; }
 
         public bool IsSingleArticle { get; set; }
+
+        public string Action { get; set; }
         public static CosmosDbConfig Create(IConfiguration configuration)
         {
             return configuration.GetSection(nameof(CosmosDbConfig)).Get<CosmosDbConfig>();

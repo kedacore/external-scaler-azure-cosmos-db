@@ -23,9 +23,21 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
                 .ConfigureAppConfiguration(builder => _cosmosDbConfig = CosmosDbConfig.Create(builder.Build()))
                 .Build();
 
-            await SetupAsync();
-            await CreateOrdersAsync(_cosmosDbConfig.OrderCount, _cosmosDbConfig.IsSingleArticle);
-            await TeardownAsync();
+            switch (_cosmosDbConfig.Action)
+            {
+                case "setup":
+                    await SetupAsync();
+                    break;
+                case "teardown":
+                    await TeardownAsync();
+                    break;
+                case "generate":
+                    await CreateOrdersAsync(_cosmosDbConfig.OrderCount, _cosmosDbConfig.IsSingleArticle);
+                    break;
+                default:
+                    Console.WriteLine("Invalid action. Valid actions are: setup, teardown, generate");
+                    break;
+            }
         }
 
         private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
