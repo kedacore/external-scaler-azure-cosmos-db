@@ -25,10 +25,25 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
     ```
 
-1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container. Make sure to put the connection string of Cosmos DB account in the command below.
+1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with setup option. Make sure to put the connection string of Cosmos DB account in the command below.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string>" CosmosDbConfig__OrderCount="<count>" CosmosDbConfig__IsSingleArticle="<true/false>" --interactive --rm --tty cosmosdb-order-generator
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__Action="setup" --interactive --rm --tty cosmosdb-order-generator
+    ```
+1. Start generating the order, update the CosmosDbConfig__OrderCount and CosmosDbConfig__IsSingleArticle as required for your testing.
+    ```text
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__OrderCount=200 --env CosmosDbConfig__Action="generate" --env CosmosDbConfig__IsSingleArticle="<true/false>" --interactive --rm --tty cosmosdb-order-generator
+    ```
+
+1. Check the console output and verify that the orders were created
+
+    ```text
+    Creating order 1f157b6e-c51f-4e02-a492-295e7fd47fbe - 3 unit(s) of Mouse for Cleta Padberg
+    Creating order ffeb4822-43e6-4b80-a439-d2ad09a278c1 - 9 unit(s) of Soap for Uriel Cormier
+    Creating order b0e396d7-e140-43f5-872c-f47df6bccf2e - 4 unit(s) of Chair for Granville Auer
+    .....
+    .....
+    That's it, see you later!
     ```
 
     > **Caution** The default application settings provision a throughput of 11,000 RU/s to the test Cosmos DB container. This sets the number of its [physical partitions](https://docs.microsoft.com/azure/cosmos-db/partitioning-overview#physical-partitions) to 2. If you have a free Azure account which offers limited throughput, or if you want to limit the cost of running the sample, be sure to update the throughput to 400 RU/s by setting the value of property `CosmosDb:ConnectionThroughput` to `400` in file `src/Scaler.Demo/OrderGenerator/appsettings.json` before building the container image. That would still allow testing of KEDA scaling between 0 and 1 instances but not upto 2 instances. Also, at any point, you can run order-generator with `teardown` option to delete the database and Cosmos DB container inside.
@@ -41,18 +56,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
     The order-processor application will create lease database and container if they do not exist. The default application settings would share the same database between the monitored and lease containers. The order-processor application will then activate a change-feed processor to monitor and process new changes in the monitored container.
 
-1. Keep the order-processor application running. Sample logs to validate, the orders are getting created.
-
-    ```text
-    Creating order 1f157b6e-c51f-4e02-a492-295e7fd47fbe - 3 unit(s) of Mouse for Cleta Padberg
-    Creating order ffeb4822-43e6-4b80-a439-d2ad09a278c1 - 9 unit(s) of Soap for Uriel Cormier
-    Creating order b0e396d7-e140-43f5-872c-f47df6bccf2e - 4 unit(s) of Chair for Granville Auer
-    .....
-    .....
-    That's it, see you later!
-    ```
-
-1. Go back to the second shell where the order-processor application is running. Check the console output and verify that the orders were processed.
+1. Check the console output and verify that the orders were processed.
 
     ```text
     2021-09-03 06:52:34 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
@@ -95,6 +99,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 1. Follow one of the steps on [Deploying KEDA](https://keda.sh/docs/deploy/) documentation page to deploy KEDA on your Kubernetes cluster.
 
 1. If using MI
+
  ```text
     a. Enable workload identity  
     # az aks update -n <clusterName> -g <resourceGroupName> --enable-oidc-issuer --enable-workload-identity 
@@ -144,7 +149,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy.yaml
     ```
 
-1. Ensure that the order-genertor and order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for order-processor, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
+1. Ensure that the order-generator and order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for order-processor, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
 
     ```text
     # kubectl get pods
@@ -175,16 +180,6 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     NAME                               READY   STATUS    RESTARTS   AGE
     cosmosdb-scaler-64dd48678c-d6dqq   1/1     Running   0          10m
     ```
-
-1. Verify that only one pod is created for the order-processor. It may take a few seconds for the pod to show up.
-
-    ```text
-    # kubectl get pods
-    NAME                                       READY   STATUS    RESTARTS   AGE
-    cosmosdb-order-processor-b59956989-fscsb   1/1     Running   0          30s
-    cosmosdb-scaler-64dd48678c-d6dqq           1/1     Running   0          20m
-    ```
-
 
 1. Verify that two pods are created for the order-processor.
 
@@ -235,5 +230,5 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 1. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator teardown
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" CosmosDbConfig__Connection="teardown" --interactive --rm --tty cosmosdb-order-generator 
     ```
