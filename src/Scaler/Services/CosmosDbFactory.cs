@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Azure.Cosmos;
