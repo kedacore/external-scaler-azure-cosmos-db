@@ -19,13 +19,13 @@ spec:
       serviceAccountName: sa
       containers:
         - name: cosmosdb-order-processor
-          image: <>
+          image: <docker-id>/cosmosdb-order-processor:latest
           imagePullPolicy: Always
           env:
             - name: CosmosDbConfig__Connection
-              value: "<>"
+              value: <connection-string-of-monitored-container>
             - name: CosmosDbConfig__LeaseConnection
-              value: "<>"
+              value: <connection-string-of-lease-container>
             - name: CosmosDbConfig__MSIClientId
               value: "<>"
             - name: CosmosDbConfig__DatabaseId
