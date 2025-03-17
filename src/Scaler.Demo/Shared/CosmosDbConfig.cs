@@ -12,13 +12,9 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
         public string LeaseDatabaseId { get; set; }
         public string LeaseContainerId { get; set; }
         public string ProcessorName { get; set; }
-
-        public string MSIClientID { get; set; }
-
+        public string MsiClientId { get; set; }
         public int OrderCount { get; set; }
-
         public bool IsSingleArticle { get; set; }
-
         public string Action { get; set; }
         public static CosmosDbConfig Create(IConfiguration configuration)
         {

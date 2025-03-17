@@ -22,7 +22,7 @@ namespace Keda.CosmosDb.Scaler
 
         private CosmosClient GetCosmosClientFromMetadata(ScalerMetadata metadata)
         {
-            // Prioritize credential based connections
+            // Prioritize credential-based connections
             if (!string.IsNullOrWhiteSpace(metadata.Endpoint))
             {
                 return _factory.GetCosmosClient(metadata.Endpoint, useCredentials: true, clientId: metadata.ClientId);

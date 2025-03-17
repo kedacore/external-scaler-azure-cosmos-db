@@ -254,7 +254,8 @@ namespace Keda.CosmosDb.Scaler.Tests
             {
                 scalerMetadata["endpoint"] = "https://example1.com:443/";
                 scalerMetadata["leaseEndpoint"] = "https://example2.com:443/";
-            } else
+            } 
+            else
             {
                 scalerMetadata["connectionFromEnv"] = "AccountEndpoint=https://example1.com:443/;AccountKey=ZHVtbXkx";
                 scalerMetadata["leaseConnectionFromEnv"] = "AccountEndpoint=https://example2.com:443/;AccountKey=ZHVtbXky";

@@ -29,8 +29,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
         {
             Database leaseDatabase = await DemoHelper.CreateCosmosClient(
                     _cosmosDbConfig.Connection,
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID),
-                    _cosmosDbConfig.MSIClientID, _applicationName)
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId),
+                    _cosmosDbConfig.MsiClientId, _applicationName)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.LeaseDatabaseId, cancellationToken: cancellationToken);
 
             Container leaseContainer = await leaseDatabase
@@ -43,8 +43,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderProcessor
 
             _processor = DemoHelper.CreateCosmosClient(
                     _cosmosDbConfig.Connection,
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID),
-                    _cosmosDbConfig.MSIClientID, _applicationName)
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId),
+                    _cosmosDbConfig.MsiClientId, _applicationName)
                 .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId)
                 .GetChangeFeedProcessorBuilder<Order>(_cosmosDbConfig.ProcessorName, ProcessOrdersAsync)
                 .WithInstanceName(instanceName)

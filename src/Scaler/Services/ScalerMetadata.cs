@@ -14,7 +14,6 @@ namespace Keda.CosmosDb.Scaler
         /// <summary>
         /// ID of Cosmos DB database containing monitored container.
         /// </summary>
-        [JsonRequired]
         public string DatabaseId { get; set; }
 
         /// <summary>
@@ -91,9 +90,9 @@ namespace Keda.CosmosDb.Scaler
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(Endpoint))
+                if (!string.IsNullOrWhiteSpace(LeaseEndpoint))
                 {
-                    return new Uri(this.LeaseEndpoint).Host;
+                    return new Uri(LeaseEndpoint).Host;
                 }
                 else
                 {

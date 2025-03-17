@@ -100,16 +100,23 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 1. If using MI
 
- ```text
     a. Enable workload identity  
-    # az aks update -n <clusterName> -g <resourceGroupName> --enable-oidc-issuer --enable-workload-identity 
-    c. Create User Assigned Idenitty
-    # az identity create --name <identityName> --resource-group <resourceGroupName> --location <locationName> 
-    d. Grant MI access to the cluster: [Data Plane Role](https://aka.ms/dp-role-access), [Control Plane Role](https://aka.ms/cp-role-access)
-    e. [Createe Service Accoubt yaml](https://aka.ms/sa-aks-label)
-    f. Create federated identity credential 
-    # az identity federated-credential create --name <credentialName> --resource-group <resourceGroupName> --identity-name <identityName> --issuer <oidcIssuerUrl> --subject system:serviceaccount:<namespace>:<serviceaccountname>
- ```
+    ```text
+        # az aks update -n <cluster-name> -g <resource-group-name> --enable-oidc-issuer --enable-workload-identity 
+    ```
+    b. Create User Assigned Idenitty
+    ```text
+        # az identity create --name <identity-name> --resource-group <resource-group-name> --location <location-name> 
+    ```
+    c. Grant MI access to the cluster: [Data Plane Role](https://aka.ms/dp-role-access), [Control Plane Role](https://aka.ms/cp-role-access)
+
+    d. [Create Service Account yaml](https://aka.ms/sa-aks-label)
+
+    e. Create federated identity credential 
+    ```text
+        # az identity federated-credential create --name <credential-name> --resource-group <resource-group-name> --identity-name <identity-name> --issuer <oidc-issuer-url> --subject system:serviceaccount:<namespace>:<serviceaccountname>
+    ```
+
 
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
