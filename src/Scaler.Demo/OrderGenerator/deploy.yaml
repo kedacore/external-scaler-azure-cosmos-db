@@ -3,29 +3,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cosmosdb-order-processor
+  name: cosmosdb-order-generator
   namespace: default
 spec:
   replicas: 1 # A replica is required to be up momentarily to initialize the change-feed.
   selector:
     matchLabels:
-      app: cosmosdb-order-processor
+      app: cosmosdb-order-generator
   template:
     metadata:
       labels:
-        app: cosmosdb-order-processor
+        app: cosmosdb-order-generator
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: <service-account-name>
       containers:
-        - name: cosmosdb-order-processor
-          image: <docker-id>/cosmosdb-order-processor:latest
+        - name: cosmosdb-order-generator
+          image: <image-name>
           imagePullPolicy: Always
           env:
             - name: CosmosDbConfig__Connection
-              value: <connection-string-of-monitored-container>
+              value: "<endpoint or connection-string>"
             - name: CosmosDbConfig__LeaseConnection
-              value: <connection-string-of-lease-container>
+              value: "<endpoint or connection-string>"
             - name: CosmosDbConfig__MsiClientId
               value: "<client-id>"
             - name: CosmosDbConfig__DatabaseId
@@ -38,3 +38,9 @@ spec:
               value: "OrderProcessorLeases"
             - name: CosmosDbConfig__ProcessorName
               value: "OrderProcessor"
+            - name: CosmosDbConfig__OrderCount
+              value: "1000"
+            - name: CosmosDbConfig__IsSingleArticle
+              value: "false"
+            - name: CosmosDbConfig__Action
+              value: "setup" #options: setup, teardown, generate

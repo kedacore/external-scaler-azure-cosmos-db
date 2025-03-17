@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
@@ -19,22 +20,32 @@ namespace Keda.CosmosDb.Scaler
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        private CosmosClient GetCosmosClientFromMetadata(ScalerMetadata metadata)
+        {
+            // Prioritize credential-based connections
+            if (!string.IsNullOrWhiteSpace(metadata.Endpoint))
+            {
+                return _factory.GetCosmosClient(metadata.Endpoint, useCredentials: true, clientId: metadata.ClientId);
+            }
+            else
+            {
+                return _factory.GetCosmosClient(metadata.Connection , useCredentials: false, clientId: null);
+            }
+        }
+
         public async Task<long> GetPartitionCountAsync(ScalerMetadata scalerMetadata)
         {
             try
             {
-                Container leaseContainer = _factory
-                    .GetCosmosClient(scalerMetadata.LeaseConnection)
+                Container leaseContainer = GetCosmosClientFromMetadata(scalerMetadata)
                     .GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
 
-                ChangeFeedEstimator estimator = _factory
-                    .GetCosmosClient(scalerMetadata.Connection)
+                ChangeFeedEstimator estimator = GetCosmosClientFromMetadata(scalerMetadata)
                     .GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId)
                     .GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
 
                 // It does not help by creating more change-feed processing instances than the number of partitions.
                 int partitionCount = 0;
-
                 using (FeedIterator<ChangeFeedProcessorState> iterator = estimator.GetCurrentStateIterator())
                 {
                     while (iterator.HasMoreResults)
