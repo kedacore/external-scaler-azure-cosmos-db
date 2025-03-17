@@ -44,8 +44,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
         {
             Container container = DemoHelper.CreateCosmosClient(
                     _cosmosDbConfig.Connection, 
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID), 
-                    _cosmosDbConfig.MSIClientID, _applicationName)
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId), 
+                    _cosmosDbConfig.MsiClientId, _applicationName)
                 .GetDatabase(_cosmosDbConfig.DatabaseId)
                 .GetContainer(_cosmosDbConfig.ContainerId);
 
@@ -92,8 +92,8 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
 
             Database database = await DemoHelper.CreateCosmosClient(
                     _cosmosDbConfig.Connection,
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MSIClientID),
-                    _cosmosDbConfig.MSIClientID, _applicationName)
+                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId),
+                    _cosmosDbConfig.MsiClientId, _applicationName)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.DatabaseId);
 
             Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId} with throughput: {_cosmosDbConfig.ContainerThroughput} RU/s");

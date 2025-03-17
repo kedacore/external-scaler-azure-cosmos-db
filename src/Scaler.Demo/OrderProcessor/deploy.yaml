@@ -16,7 +16,7 @@ spec:
         app: cosmosdb-order-processor
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: sa
+      serviceAccountName: <service-account-name>
       containers:
         - name: cosmosdb-order-processor
           image: <docker-id>/cosmosdb-order-processor:latest
@@ -26,8 +26,8 @@ spec:
               value: <connection-string-of-monitored-container>
             - name: CosmosDbConfig__LeaseConnection
               value: <connection-string-of-lease-container>
-            - name: CosmosDbConfig__MSIClientId
-              value: "<>"
+            - name: CosmosDbConfig__MsiClientId
+              value: "<client-id>"
             - name: CosmosDbConfig__DatabaseId
               value: "StoreDatabase"
             - name: CosmosDbConfig__ContainerId

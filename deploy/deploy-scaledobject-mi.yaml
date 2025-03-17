@@ -1,4 +1,4 @@
-# Template scaled-object for using KEDA external scaler for Azure Cosmos DB, using connection strings.
+# Template scaled-object for using KEDA external scaler for Azure Cosmos DB, using managed identity.
 
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -18,6 +18,6 @@ spec:
         leaseDatabaseId: <lease-database-id>
         leaseContainerId: <lease-container-id>
         endpoint: <endpoint>
-        leaseEndpoint: <leaseEndpoint>
-        clientId: <clientId>
+        leaseEndpoint: <lease-endpoint>
+        clientId: <client-id>
         processorName: <processor-name>

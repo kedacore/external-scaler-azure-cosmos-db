@@ -17,7 +17,7 @@ spec:
         app: cosmosdb-scaler
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: sa
+      serviceAccountName: <service-account-name>
       containers:
         - image: <docker-id>/cosmosdb-scaler:latest
           imagePullPolicy: Always

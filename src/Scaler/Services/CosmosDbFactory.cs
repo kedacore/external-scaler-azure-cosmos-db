@@ -21,10 +21,9 @@ namespace Keda.CosmosDb.Scaler
         {
             if (useCredentials)
             {
-                var credential = GetChainedCredential(clientId);
                 return new CosmosClient(
                     endpointOrConnection, 
-                    credential, 
+                    GetChainedCredential(clientId), 
                     new CosmosClientOptions { 
                         ConnectionMode = ConnectionMode.Gateway,
                         ApplicationName = _applicationName, 
@@ -48,20 +47,21 @@ namespace Keda.CosmosDb.Scaler
         /// </summary>
         /// <param name="clientId">ClientId of the identity to be used. System identity is used if this is null. </param>
         /// <returns></returns>
-        private TokenCredential GetChainedCredential(string clientId)
+        public static TokenCredential GetChainedCredential(string clientId)
         {
-            var options = new DefaultAzureCredentialOptions {
-                    ManagedIdentityClientId = clientId,
-                    ExcludeInteractiveBrowserCredential = true 
-            };
-
-            var workloadIdentityCredentials = new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { ClientId = clientId });
-            var azCliCredentials = new AzureCliCredential();
-
             return new ChainedTokenCredential(
-                new DefaultAzureCredential(options), 
-                workloadIdentityCredentials, 
-                azCliCredentials);
+                new DefaultAzureCredential(
+                    new DefaultAzureCredentialOptions
+                        {
+                            ManagedIdentityClientId = clientId,
+                            ExcludeInteractiveBrowserCredential = true
+                        }),
+                new WorkloadIdentityCredential(
+                    new WorkloadIdentityCredentialOptions 
+                    { 
+                        ClientId = clientId 
+                    }),
+                new AzureCliCredential());
         }
     }
 }
