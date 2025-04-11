@@ -16,7 +16,11 @@ namespace Keda.CosmosDb.Scaler
 
         private CosmosClient CreateCosmosClient(string connection)
         {
-            return new CosmosClient(connection, new CosmosClientOptions { ConnectionMode = ConnectionMode.Gateway });
+            return new CosmosClient(connection, new CosmosClientOptions 
+            { 
+                ConnectionMode = ConnectionMode.Gateway,
+                ApplicationName = "KEDA-External-Scaler"
+            });
         }
     }
 }
