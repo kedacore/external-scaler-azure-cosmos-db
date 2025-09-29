@@ -23,13 +23,14 @@ namespace Keda.CosmosDb.Scaler
         private CosmosClient GetCosmosClientFromMetadata(ScalerMetadata metadata)
         {
             // Prioritize credential-based connections
+            // If clientId is null, the azure.workload.identity/client-id annotation in the service account will be picked as the default client ID during the client initialization.
             if (!string.IsNullOrWhiteSpace(metadata.Endpoint))
             {
                 return _factory.GetCosmosClient(metadata.Endpoint, useCredentials: true, clientId: metadata.ClientId);
             }
             else
             {
-                return _factory.GetCosmosClient(metadata.Connection , useCredentials: false, clientId: null);
+                return _factory.GetCosmosClient(metadata.Connection, useCredentials: false, clientId: null);
             }
         }
 

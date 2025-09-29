@@ -58,7 +58,7 @@ namespace Keda.CosmosDb.Scaler
         public string LeaseEndpoint { get; set; }
 
         /// <summary>
-        /// ClientId of the identity to be used. System assigned identity is used, if this is null.
+        /// ClientId of the managed identity to be used. If this is null, the azure.workload.identity/client-id annotation in the service account is used.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public string ClientId { get; set; }
@@ -105,14 +105,25 @@ namespace Keda.CosmosDb.Scaler
         [OnDeserialized]
         internal void OnDeserializedMethod(StreamingContext context)
         {
-            if (string.IsNullOrEmpty(Connection) && string.IsNullOrEmpty(Endpoint))
+            if (string.IsNullOrWhiteSpace(Connection) && string.IsNullOrWhiteSpace(Endpoint))
             {
                 throw new JsonSerializationException("Both Connection and Endpoint are missing.");
             }
 
-            if (string.IsNullOrEmpty(LeaseConnection) && string.IsNullOrEmpty(LeaseEndpoint))
+            if (string.IsNullOrWhiteSpace(LeaseConnection) && string.IsNullOrWhiteSpace(LeaseEndpoint))
             {
                 throw new JsonSerializationException("Both LeaseConnection and LeaseEndpoint are missing.");
+            }
+
+            // Validate ClientId as a GUID, if provided.
+            if (!string.IsNullOrWhiteSpace(ClientId))
+            {
+                ClientId = ClientId.Trim();
+                
+                if (!Guid.TryParse(ClientId, out _))
+                {
+                    throw new JsonSerializationException($"ClientId '{ClientId}' is not a valid GUID.");
+                }
             }
         }
 
