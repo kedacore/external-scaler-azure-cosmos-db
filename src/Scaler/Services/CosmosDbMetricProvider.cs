@@ -20,17 +20,30 @@ namespace Keda.CosmosDb.Scaler
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        private CosmosClient GetCosmosClientFromMetadata(ScalerMetadata metadata)
+        private CosmosClient GetCosmosClientFromMetadata(ScalerMetadata metadata, bool isLeaseContainer)
         {
-            // Prioritize credential-based connections
-            // If clientId is null, the azure.workload.identity/client-id annotation in the service account will be picked as the default client ID during the client initialization.
-            if (!string.IsNullOrWhiteSpace(metadata.Endpoint))
+            // Default to main container values
+            string connectionString = metadata.Connection;
+            string endpoint = metadata.Endpoint;
+
+            // Override with lease container values if applicable
+            if (isLeaseContainer)
             {
-                return _factory.GetCosmosClient(metadata.Endpoint, useCredentials: true, clientId: metadata.ClientId);
+                connectionString = metadata.LeaseConnection ?? metadata.Connection;
+                endpoint = metadata.LeaseEndpoint ?? metadata.Endpoint;
+            }
+
+            // Prioritize credential-based connections
+            // Note: if ClientId is null, the Azure Workload Identity controller may inject client ID from service account annotations
+            if (!string.IsNullOrWhiteSpace(endpoint))
+            {
+                _logger.LogTrace($"Using MSI credentials for CosmosClient with endpoint: [{endpoint}] and clientId: [{metadata.ClientId}] .");
+                return _factory.GetCosmosClient(endpoint, useCredentials: true, clientId: metadata.ClientId);
             }
             else
             {
-                return _factory.GetCosmosClient(metadata.Connection, useCredentials: false, clientId: null);
+                _logger.LogTrace($"Using connection string for CosmosClient with Connection: [{connectionString}].");
+                return _factory.GetCosmosClient(connectionString, useCredentials: false, clientId: null);
             }
         }
 
@@ -38,10 +51,10 @@ namespace Keda.CosmosDb.Scaler
         {
             try
             {
-                Container leaseContainer = GetCosmosClientFromMetadata(scalerMetadata)
+                Container leaseContainer = GetCosmosClientFromMetadata(scalerMetadata, isLeaseContainer: true)
                     .GetContainer(scalerMetadata.LeaseDatabaseId, scalerMetadata.LeaseContainerId);
 
-                ChangeFeedEstimator estimator = GetCosmosClientFromMetadata(scalerMetadata)
+                ChangeFeedEstimator estimator = GetCosmosClientFromMetadata(scalerMetadata, isLeaseContainer: false)
                     .GetContainer(scalerMetadata.DatabaseId, scalerMetadata.ContainerId)
                     .GetChangeFeedEstimator(scalerMetadata.ProcessorName, leaseContainer);
 
