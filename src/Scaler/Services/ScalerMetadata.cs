@@ -162,7 +162,7 @@ namespace Keda.CosmosDb.Scaler
                 return builder.ContainsKey("AccountEndpoint") && 
                       (builder.ContainsKey("AccountKey") || builder.ContainsKey("ResourceToken"));
             }
-            catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is KeyNotFoundException)
+            catch (ArgumentException)
             {   
                 return false;
             }
