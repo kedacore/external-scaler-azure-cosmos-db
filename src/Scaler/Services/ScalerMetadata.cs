@@ -115,11 +115,27 @@ namespace Keda.CosmosDb.Scaler
                 throw new JsonSerializationException("Both LeaseConnection and LeaseEndpoint are missing.");
             }
 
+            // Validate connection string format, if provided
+            if (!string.IsNullOrWhiteSpace(Connection))
+            {                
+                if (!IsValidConnectionString(Connection))
+                {
+                    throw new JsonSerializationException($"'Connection' does not contain a valid Cosmos DB connection string. Provided connection string: '{Connection}'. Accepted format: 'AccountEndpoint=your-account-endpoint;AccountKey=your-account-key;'.");
+                }
+            }
+
+            // Validate connection string format, if provided
+            if (!string.IsNullOrWhiteSpace(LeaseConnection))
+            {                
+                if (!IsValidConnectionString(LeaseConnection))
+                {
+                    throw new JsonSerializationException($"'LeaseConnection' does not contain a valid Cosmos DB connection string. Provided connection string: '{LeaseConnection}'. Accepted format: 'AccountEndpoint=your-account-endpoint;AccountKey=your-account-key;'.");
+                }
+            }
+
             // Validate ClientId as a GUID, if provided.
             if (!string.IsNullOrWhiteSpace(ClientId))
-            {
-                ClientId = ClientId.Trim();
-                
+            {                
                 if (!Guid.TryParse(ClientId, out _))
                 {
                     throw new JsonSerializationException($"ClientId '{ClientId}' is not a valid GUID.");
@@ -130,6 +146,26 @@ namespace Keda.CosmosDb.Scaler
         public static ScalerMetadata Create(ScaledObjectRef scaledObjectRef)
         {
             return JsonConvert.DeserializeObject<ScalerMetadata>(scaledObjectRef.ScalerMetadata.ToString());
+        }
+
+        /// <summary>
+        /// Checks if the provided Cosmos Db connection string is valid.
+        /// Note: This validation is specific to Azure Cosmos DB for NoSQL API connection strings.
+        /// </summary>
+        /// <param name="connectionString">The connection string to validate.</param>
+        /// <returns>True if the connection string is valid; otherwise, false.</returns>
+        internal bool IsValidConnectionString(string connectionString)
+        {
+            try
+            {
+                var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+                return builder.ContainsKey("AccountEndpoint") && 
+                      (builder.ContainsKey("AccountKey") || builder.ContainsKey("ResourceToken"));
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is KeyNotFoundException)
+            {   
+                return false;
+            }
         }
     }
 }
