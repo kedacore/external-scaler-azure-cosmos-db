@@ -16,6 +16,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 ## Testing sample application locally on Docker
 
+> Note: Connection String is used to run the application locally on Docker, as Managed Identity is not available locally.
+
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
 1. Run the below commands to build the Docker container images for order-generator and order-processor applications.
@@ -28,11 +30,11 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below. If using managed identity, put the Cosmos DB account endpoint.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string-or-endpoint>" --env CosmosDbConfig__Action="setup" --interactive --rm --tty cosmosdb-order-generator
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__Action="setup" --interactive --rm --tty cosmosdb-order-generator
     ```
 1. Start generating the order, update the CosmosDbConfig__OrderCount and CosmosDbConfig__IsSingleArticle as required for your testing.
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string-or-endpoint>" --env CosmosDbConfig__OrderCount=200 --env CosmosDbConfig__Action="generate" --env CosmosDbConfig__IsSingleArticle="<true/false>" --interactive --rm --tty cosmosdb-order-generator
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__OrderCount=200 --env CosmosDbConfig__Action="generate" --env CosmosDbConfig__IsSingleArticle="<true/false>" --interactive --rm --tty cosmosdb-order-generator
     ```
 
 1. Check the console output and verify that the orders were created
@@ -51,7 +53,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 1. Start a second shell instance and run the order-processor application in a new container. You can put the same connection string or endpoint in both places in the command below. Note that the sample applications are written to handle different Cosmos DB accounts for monitored and lease containers but having two different accounts is not a requirement.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string-or-endpoint>" --env CosmosDbConfig__LeaseConnection="<connection-string-or-endpoint>" --interactive --rm --tty cosmosdb-order-processor
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__LeaseConnection="<connection-string>" --interactive --rm --tty cosmosdb-order-processor
     ```
 
     The order-processor application will create lease database and container if they do not exist. The default application settings would share the same database between the monitored and lease containers. The order-processor application will then activate a change-feed processor to monitor and process new changes in the monitored container.
