@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using Microsoft.Azure.Cosmos;
+using System;
 
 namespace Keda.CosmosDb.Scaler.Demo.Shared
 {
@@ -18,6 +19,8 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
         {
             if (useCredentials)
             {
+                ValidateClientId(clientId);
+
                 return new CosmosClient(
                     endpointOrConnection,
                     GetChainedCredential(clientId),
@@ -30,6 +33,8 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
             }
             else
             {
+                ValidateConnectionString(endpointOrConnection);
+                
                 return new CosmosClient(
                     endpointOrConnection,
                     new CosmosClientOptions
@@ -61,6 +66,29 @@ namespace Keda.CosmosDb.Scaler.Demo.Shared
                         ClientId = clientId
                     }),
                 new AzureCliCredential());
+        }
+
+        private static void ValidateClientId(string clientId)
+        {
+            if (!string.IsNullOrWhiteSpace(clientId) && !Guid.TryParse(clientId, out _))
+            {
+                throw new ArgumentException($"Client ID: [{clientId}] must be a valid GUID.");
+            }
+        }
+
+        private static void ValidateConnectionString(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new ArgumentException("Connection string cannot be null or empty.");
+            }
+
+            var builder = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = connectionString };
+            if (!builder.ContainsKey("AccountEndpoint") ||
+                !(builder.ContainsKey("AccountKey") || builder.ContainsKey("ResourceToken")))
+            {
+                throw new ArgumentException($"Connection string: [{connectionString}] is not a valid Cosmos DB connection string. Accepted format: 'AccountEndpoint=your-account-endpoint;AccountKey=your-account-key;'.");
+            }
         }
     }
 }

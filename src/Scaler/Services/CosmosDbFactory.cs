@@ -46,7 +46,7 @@ namespace Keda.CosmosDb.Scaler
         /// on Azure, while az CLI credentials can be used for local testing.
         /// </summary>
         /// <param name="clientId">ClientId of the identity to be used. System identity is used if this is null. </param>
-        /// <returns></returns>
+        /// <returns>A chained token credential.</returns>
         public static TokenCredential GetChainedCredential(string clientId)
         {
             return new ChainedTokenCredential(
