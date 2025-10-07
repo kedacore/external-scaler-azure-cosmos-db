@@ -205,6 +205,49 @@ namespace Keda.CosmosDb.Scaler.Tests
                 response.MetricSpecs[0].MetricName);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("11111111-1111-1111-1111-111111111111")]
+        public async Task IsActive_ManagedIdentity_PassesClientIdThrough(string clientId)
+        {
+            _metricProviderMock
+                .Setup(p => p.GetPartitionCountAsync(It.Is<ScalerMetadata>(metadata => metadata.ClientId == clientId)))
+                .ReturnsAsync(0L)
+                .Verifiable();
+
+            var scaledObject = GetScaledObjectRef(useManagedIdentity: true);
+            if (clientId != null)
+            {
+                scaledObject.ScalerMetadata["clientId"] = clientId;
+            }
+            else
+            {
+                scaledObject.ScalerMetadata.Remove("clientId");
+            }
+
+            await _cosmosDbScalerService.IsActive(scaledObject, null);
+
+            _metricProviderMock.Verify(); // Ensures the call matched the expected ClientId
+            _metricProviderMock.Verify(p => p.GetPartitionCountAsync(It.IsAny<ScalerMetadata>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetMetricSpec_ManagedIdentity_IgnoresClientIdForMetricNameNormalization()
+        {
+            // We call GetMetricSpec (no metric provider hit) but still want to ensure metric name not influenced by clientId.
+            var scaledObject = GetScaledObjectRef(useManagedIdentity: true);
+            scaledObject.ScalerMetadata["clientId"] = "11111111-1111-1111-1111-111111111111";
+
+            // Add characters in endpoints that force normalization differences unrelated to clientId
+            scaledObject.ScalerMetadata["leaseEndpoint"] = "https://Example.Host.Name:443/";
+
+            GetMetricSpecResponse response = await _cosmosDbScalerService.GetMetricSpec(scaledObject, null);
+
+            Assert.Single(response.MetricSpecs);
+            Assert.StartsWith("cosmosdb-partitioncount-example-host-name-", response.MetricSpecs[0].MetricName);
+        }
+
         private static GetMetricsRequest GetGetMetricsRequest(bool useManagedIdentity = false)
         {
             return new GetMetricsRequest
