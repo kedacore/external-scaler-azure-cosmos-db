@@ -130,7 +130,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker push <docker-id>/cosmosdb-scaler:latest
     ```
 
-4. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application.
+4. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application. </br>
+   **If using MI**: *Add your service account name, and enable using workload identity in the manifest file as well.*
 
     ```text
     kubectl apply --filename=src/Scaler/deploy.yaml
