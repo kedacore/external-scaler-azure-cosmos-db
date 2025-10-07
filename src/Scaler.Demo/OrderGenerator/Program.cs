@@ -14,40 +14,79 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
     {
         private static CosmosDbConfig _cosmosDbConfig;
 
-        public static string _applicationName = "cosmosdb-order-generator";
-
         public static async Task Main(string[] args)
         {
+            if (args.Length != 1 || !new[] { "generate", "setup", "teardown" }.Contains(args[0]))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Please use one of the following verbs with the command:");
+                Console.WriteLine("    generate : Add new orders to the order-container");
+                Console.WriteLine("    setup    : Create Cosmos database and order-container");
+                Console.WriteLine("    teardown : Delete Cosmos database and containers inside");
+                Console.WriteLine();
+                return;
+            }
+
             // _cosmosDbConfig should be initialized once the host is built.
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(builder => _cosmosDbConfig = CosmosDbConfig.Create(builder.Build()))
                 .Build();
 
-            switch (_cosmosDbConfig.Action)
+            switch (args[0])
             {
-                case "setup":
-                    await SetupAsync();
-                    break;
-                case "teardown":
-                    await TeardownAsync();
-                    break;
-                case "generate":
-                    await CreateOrdersAsync(_cosmosDbConfig.OrderCount, _cosmosDbConfig.IsSingleArticle);
-                    break;
-                default:
-                    Console.WriteLine("Invalid action. Valid actions are: setup, teardown, generate");
-                    break;
+                case "generate": await GenerateAsync(); break;
+                case "setup": await SetupAsync(); break;
+                case "teardown": await TeardownAsync(); break;
             }
+        }
+
+        private static async Task GenerateAsync()
+        {
+            int count = ReadOrderCount();
+            bool isSingleArticle = ReadIsSingleArticle();
+            await CreateOrdersAsync(count, isSingleArticle);
+        }
+
+        private static int ReadOrderCount()
+        {
+            while (true)
+            {
+                Console.Write("Let's queue some orders, how many do you want? ");
+
+                if (int.TryParse(Console.ReadLine(), out int count) && count >= 1 && count <= 10000)
+                {
+                    return count;
+                }
+
+                Console.WriteLine("That's not a valid amount. Please enter a number between 1 and 10000.");
+            }
+        }
+
+        private static bool ReadIsSingleArticle()
+        {
+            bool? isSingleArticle = null;
+
+            while (isSingleArticle == null)
+            {
+                Console.Write("Do you want to limit orders to single article (to put them in a single partition)? (Y/N) ");
+
+                isSingleArticle = Console.ReadKey().Key switch
+                {
+                    ConsoleKey.Y => true,
+                    ConsoleKey.N => false,
+                    _ => null,
+                };
+
+                Console.WriteLine();
+            }
+
+            return isSingleArticle.Value;
         }
 
         private static async Task CreateOrdersAsync(int count, bool isSingleArticle)
         {
-            Container container = DemoHelper.CreateCosmosClient(
-                    _cosmosDbConfig.Connection, 
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId), 
-                    _cosmosDbConfig.MsiClientId, _applicationName)
-                .GetDatabase(_cosmosDbConfig.DatabaseId)
-                .GetContainer(_cosmosDbConfig.ContainerId);
+            Container container = new CosmosClient(_cosmosDbConfig.Connection)
+                .GetContainer(_cosmosDbConfig.DatabaseId, _cosmosDbConfig.ContainerId);
 
             int remainingCount = count;
             string article = isSingleArticle ? new Commerce().Product() : null;
@@ -68,7 +107,6 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
             }
 
             Console.WriteLine("That's it, see you later!");
-            await Task.Delay(TimeSpan.FromSeconds(1000));
         }
 
         private static async Task CreateOrderAsync(Container container, string article)
@@ -90,10 +128,7 @@ namespace Keda.CosmosDb.Scaler.Demo.OrderGenerator
         {
             Console.WriteLine($"Creating database: {_cosmosDbConfig.DatabaseId}");
 
-            Database database = await DemoHelper.CreateCosmosClient(
-                    _cosmosDbConfig.Connection,
-                    !string.IsNullOrWhiteSpace(_cosmosDbConfig.MsiClientId),
-                    _cosmosDbConfig.MsiClientId, _applicationName)
+            Database database = await new CosmosClient(_cosmosDbConfig.Connection)
                 .CreateDatabaseIfNotExistsAsync(_cosmosDbConfig.DatabaseId);
 
             Console.WriteLine($"Creating container: {_cosmosDbConfig.ContainerId} with throughput: {_cosmosDbConfig.ContainerThroughput} RU/s");

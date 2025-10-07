@@ -27,30 +27,15 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
     ```
 
-1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below. If using managed identity, put the Cosmos DB account endpoint.
+2. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__Action="setup" --interactive --rm --tty cosmosdb-order-generator
-    ```
-1. Start generating the order, update the CosmosDbConfig__OrderCount and CosmosDbConfig__IsSingleArticle as required for your testing.
-    ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__OrderCount=200 --env CosmosDbConfig__Action="generate" --env CosmosDbConfig__IsSingleArticle="<true/false>" --interactive --rm --tty cosmosdb-order-generator
-    ```
-
-1. Check the console output and verify that the orders were created
-
-    ```text
-    Creating order 1f157b6e-c51f-4e02-a492-295e7fd47fbe - 3 unit(s) of Mouse for Cleta Padberg
-    Creating order ffeb4822-43e6-4b80-a439-d2ad09a278c1 - 9 unit(s) of Soap for Uriel Cormier
-    Creating order b0e396d7-e140-43f5-872c-f47df6bccf2e - 4 unit(s) of Chair for Granville Auer
-    .....
-    .....
-    That's it, see you later!
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator setup
     ```
 
     > **Caution** The default application settings provision a throughput of 11,000 RU/s to the test Cosmos DB container. This sets the number of its [physical partitions](https://docs.microsoft.com/azure/cosmos-db/partitioning-overview#physical-partitions) to 2. If you have a free Azure account which offers limited throughput, or if you want to limit the cost of running the sample, be sure to update the throughput to 400 RU/s by setting the value of property `CosmosDb:ConnectionThroughput` to `400` in file `src/Scaler.Demo/OrderGenerator/appsettings.json` before building the container image. That would still allow testing of KEDA scaling between 0 and 1 instances but not upto 2 instances. Also, at any point, you can run order-generator with `teardown` option to delete the database and Cosmos DB container inside.
 
-1. Start a second shell instance and run the order-processor application in a new container. You can put the same connection string or endpoint in both places in the command below. Note that the sample applications are written to handle different Cosmos DB accounts for monitored and lease containers but having two different accounts is not a requirement.
+1. Start a second shell instance and run the order-processor application in a new container. You can put the same connection string in both places in the command below. Note that the sample applications are written to handle different Cosmos DB accounts for monitored and lease containers but having two different accounts is not a requirement.
 
     ```text
     # docker run --env CosmosDbConfig__Connection="<connection-string>" --env CosmosDbConfig__LeaseConnection="<connection-string>" --interactive --rm --tty cosmosdb-order-processor
@@ -58,7 +43,19 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
     The order-processor application will create lease database and container if they do not exist. The default application settings would share the same database between the monitored and lease containers. The order-processor application will then activate a change-feed processor to monitor and process new changes in the monitored container.
 
-1. Check the console output and verify that the orders were processed.
+1. Keep the order-processor application running. Go back to the first shell instance and run order-generator application with `generate` option to add fake orders to the test Cosmos DB container.
+
+    ```text
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --tty --rm cosmosdb-order-generator generate
+    Let's queue some orders, how many do you want? 3
+    Do you want to limit orders to single article (to put them in a single partition)? (Y/N) N
+    Creating order 1f157b6e-c51f-4e02-a492-295e7fd47fbe - 3 unit(s) of Mouse for Cleta Padberg
+    Creating order ffeb4822-43e6-4b80-a439-d2ad09a278c1 - 9 unit(s) of Soap for Uriel Cormier
+    Creating order b0e396d7-e140-43f5-872c-f47df6bccf2e - 4 unit(s) of Chair for Granville Auer
+    That's it, see you later!
+    ```
+
+1. Go back to the second shell where the order-processor application is running. Check the console output and verify that the orders were processed.
 
     ```text
     2021-09-03 06:52:34 info: Keda.CosmosDb.Scaler.Demo.OrderProcessor.Worker[0]
@@ -87,7 +84,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
         Order 135e1fb9-807a-489e-90f0-0cb4c3768a36 processed
     ```
 
-1. Stop order-processor container from the first shell.
+7. Stop order-processor container from the first shell.
 
     ```text
     # docker container ls --no-trunc --format "{{.Image}} {{.Names}}"
@@ -141,31 +138,25 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 ## Deploying sample application to cluster
 
-1. Build the Docker container image for order-generator and order-processor application (if you haven't already) and push the container image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
+1. Build the Docker container image for order-processor application (if you haven't already) and push the container image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
 
     ```text
-    # docker build --file .\src\Scaler.Demo\OrderGenerator\Dockerfile --force-rm --tag cosmosdb-order-generator .
-    # docker tag cosmosdb-order-generator:latest <docker-id>/cosmosdb-order-generator:latest
-    # docker push <docker-id>/cosmosdb-order-generator:latest
-
     # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
     # docker tag cosmosdb-order-processor:latest <docker-id>/cosmosdb-order-processor:latest
     # docker push <docker-id>/cosmosdb-order-processor:latest
     ```
 
-1. Update your Docker ID in the image path in manifest file `src/Scaler.Demo/OrderGenerator/deploy.yaml` and `src/Scaler.Demo/OrderProcessor/deploy.yaml`. Also, update the values of connection strings to point to the test Cosmos DB account. Apply the manifest to deploy the order-processor application.
+2. Update your Docker ID in the image path in manifest file `src/Scaler.Demo/OrderProcessor/deploy.yaml`. Also, update the values of connection strings (or account endpoint and client ID, if using managed identity) to point to the test Cosmos DB account. Apply the manifest to deploy the order-processor application.
 
     ```text
-    kubectl apply --filename=src/Scaler.Demo/OrderGenerator/deploy.yaml
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy.yaml
     ```
 
-1. Ensure that the order-generator and order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for order-processor, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
+3. Ensure that the order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for order-processor, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
 
     ```text
     # kubectl get pods
     NAME                                       READY   STATUS    RESTARTS   AGE
-    cosmosdb-order-generator-b63388262-hdghd   1/1     Running   0          50s
     cosmosdb-order-processor-b59956989-bcbzg   1/1     Running   0          50s
     cosmosdb-scaler-64dd48678c-zjcgd           1/1     Running   0          23m
     # kubectl logs cosmosdb-order-processor-b59956989-bcbzg
@@ -174,7 +165,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ...
     ```
 
-1. Apply the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`
+4. Apply the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`
 
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml
@@ -190,6 +181,35 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # kubectl get pods
     NAME                               READY   STATUS    RESTARTS   AGE
     cosmosdb-scaler-64dd48678c-d6dqq   1/1     Running   0          10m
+    ```
+
+1. Add new orders to the Cosmos DB container by running the order-generator. Select option to generate all orders for the same article.
+
+    ```text
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --tty --rm cosmosdb-order-generator generate
+    Let's queue some orders, how many do you want? 150
+    Do you want to limit orders to single article (to put them in a single partition)? (Y/N) Y
+    ...
+    ```
+
+    This would restrict the orders to a single logical partition (and a single physical partition thereof). The external scaler scales the targets according to the number of change feeds that have non-zero pending messages remaining to be processed. The total number of change feeds (with or without pending messages) equals the number of physical partitions in the Cosmos DB container.
+
+1. Verify that only one pod is created for the order-processor. It may take a few seconds for the pod to show up.
+
+    ```text
+    # kubectl get pods
+    NAME                                       READY   STATUS    RESTARTS   AGE
+    cosmosdb-order-processor-b59956989-fscsb   1/1     Running   0          30s
+    cosmosdb-scaler-64dd48678c-d6dqq           1/1     Running   0          20m
+    ```
+
+1. Now, add more orders to the Cosmos DB container but this time, select option to generate orders of different articles.
+
+    ```text
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --tty --rm cosmosdb-order-generator generate
+    Let's queue some orders, how many do you want? 250
+    Do you want to limit orders to single article (to put them in a single partition)? (Y/N) N
+    ...
     ```
 
 1. Verify that two pods are created for the order-processor.
@@ -219,17 +239,18 @@ We will later deploy the order-processor application to Kubernetes cluster and u
         Processing order ca17597f-7aa2-4b04-abd8-724139b2c370 - 1 unit(s) of Gloves bought by Donny Shanahan
     ```
 
+1. To verify that the scale down is working, check that the cosmosdb-order-processor pod/s aren't running anymore after all orders are done processing. The default `cooldownPeriod` is 5 minutes, after which the cosmosdb-order-processor will stop running.
+
 ## Cleaning sample application from cluster
 
-1. Delete the scaled object, order-generator and order-processor application.
+1. Delete the scaled object and order-processor application.
 
     ```text
     # kubectl delete scaledobject cosmosdb-order-processor-scaledobject
     # kubectl delete deployment cosmosdb-order-processor
-    # kubectl delete deployment cosmosdb-order-generator
     ```
 
-1. Optionally, delete the external scaler and KEDA from cluster. The following commands assume that KEDA was installed with Helm.
+2. Optionally, delete the external scaler and KEDA from cluster. The following commands assume that KEDA was installed with Helm.
 
     ```text
     # kubectl delete service cosmosdb-scaler
@@ -238,8 +259,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # kubectl delete namespace keda
     ```
 
-1. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
+3. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
 
     ```text
-    # docker run --env CosmosDbConfig__Connection="<connection-string>" CosmosDbConfig__Connection="teardown" --interactive --rm --tty cosmosdb-order-generator 
+    # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator teardown
     ```
