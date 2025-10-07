@@ -82,7 +82,7 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
         # Managed Identity properties.
         endpoint: <endpoint>                                        # Optional. Account endpoint of the CosmosDB account containing the monitored container.
         leaseEndpoint: <lease-endpoint>                             # Optional. Account endpoint of the CosmosDB account containing the lease container.
-        clientId: <client-Id>                                       # Optional. Client ID of the identity to be used. System assigned identity is used, if this is not provided.
+        clientId: <client-Id>                                       # Optional. Client ID of the identity to be used. If this is not provided, the azure.workload.identity is used.
 
         processorName: <processor-name>                             # Mandatory. Name of change-feed processor used by listener application.
 ```
