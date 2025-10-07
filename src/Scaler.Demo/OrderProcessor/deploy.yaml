@@ -22,9 +22,9 @@ spec:
           image: <docker-id>/cosmosdb-order-processor:latest
           imagePullPolicy: Always
           env:
-            - name: CosmosDbConfig__Connection        # if using MSI, use account endpoint
+            - name: CosmosDbConfig__Connection                  # if using MSI, use account endpoint
               value: <connection-string-or-endpoint-of-monitored-container>
-            - name: CosmosDbConfig__LeaseConnection   # if using MSI, use lease account endpoint
+            - name: CosmosDbConfig__LeaseConnection             # if using MSI, use lease account endpoint
               value: <connection-string-or-endpoint-of-lease-container>
             - name: CosmosDbConfig__MsiClientId
               value: "<client-id-if-using-mi>"
