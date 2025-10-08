@@ -42,26 +42,24 @@ namespace Keda.CosmosDb.Scaler
         }
 
         /// <summary>
-        /// Returns a chained token credential to be used for authentication. Supports managed identity, workload identity credentials
-        /// on Azure, while az CLI credentials can be used for local testing.
+        /// Returns a chained token credential to be used for authentication. Supports managed identity and workload identity credentials on Azure.
+        /// Connection string should be used for local testing, as MI is not available locally.
         /// </summary>
-        /// <param name="clientId">ClientId of the identity to be used. System identity is used if this is null. </param>
+        /// <param name="clientId">ClientId of the identity to be used.</param>
         /// <returns>A chained token credential.</returns>
         public static TokenCredential GetChainedCredential(string clientId)
         {
             return new ChainedTokenCredential(
-                new DefaultAzureCredential(
-                    new DefaultAzureCredentialOptions
-                        {
-                            ManagedIdentityClientId = clientId,
-                            ExcludeInteractiveBrowserCredential = true
-                        }),
+                new ManagedIdentityCredential(
+                    new ManagedIdentityCredentialOptions(
+                        managedIdentityId: ManagedIdentityId.FromUserAssignedClientId(clientId)
+                    )),
                 new WorkloadIdentityCredential(
-                    new WorkloadIdentityCredentialOptions 
-                    { 
-                        ClientId = clientId 
-                    }),
-                new AzureCliCredential());
+                    new WorkloadIdentityCredentialOptions
+                    {
+                        ClientId = clientId
+                    })
+            );
         }
     }
 }

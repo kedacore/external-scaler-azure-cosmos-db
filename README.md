@@ -97,11 +97,11 @@ The specification below describes the `trigger` metadata in `ScaledObject` resou
   - **`leaseContainerId`** - ID of the lease container containing the change feeds.
 - **Connection String Properties:**
   - **`connectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the monitored container. You can also opt for an identity-based connection instead, refer to the `endpoint` property.
-  - **`leaseConnectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata. You can also opt for an identity-based connection instead, refer to the `leaseEndpoint` property.
+  - **`leaseConnectionFromEnv`** - Name of the environment variable on the scale target to read the connection string of the Cosmos DB account that contains the lease container. This can be same or different from the value of `connection` metadata. You can also opt for an identity-based connection instead, refer to the `leaseEndpoint` property. If left null, `connection` value of the monitored container is used.
 - **Managed Identity Properties:**
   - **`endpoint`** - Account endpoint of the CosmosDB account containing the monitored container.
-  - **`leaseEndpoint`** - Account endpoint of the CosmosDB account containing the lease container. This can be same or different from the value of `endpoint` metadata.
-  - **`clientId`** - ClientId of the identity to be used. System assigned identity is used, if this is null.
+  - **`leaseEndpoint`** - Account endpoint of the CosmosDB account containing the lease container. This can be same or different from the value of `endpoint` metadata. If left null, `endpoint` value of the monitored container is used.
+  - **`clientId`** - ClientId of the identity to be used. If this is not provided, the azure.workload.identity is used.
 - **`processorName`** - Name of change-feed processor used by listener application. For more information on this, you can refer to [Implementing the change feed processor](https://docs.microsoft.com/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) section.
 
 > **Note** Ideally, we would have created `TriggerAuthentication` resource that would have prevented us from adding the connection strings in plain text in the `ScaledObject` trigger metadata. However, this is not possible since at the moment, the triggers of `external` type do not support referencing a `TriggerAuthentication` resource ([link](https://keda.sh/docs/scalers/external/#authentication-parameters)).

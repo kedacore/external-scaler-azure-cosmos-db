@@ -34,15 +34,15 @@ namespace Keda.CosmosDb.Scaler
             }
 
             // Prioritize credential-based connections
-            // Note: if ClientId is null, the Azure Workload Identity controller may inject client ID from service account annotations
+            // Note: if ClientId is null, the Azure Workload Identity controller will inject client ID from service account annotations
             if (!string.IsNullOrWhiteSpace(endpoint))
             {
-                _logger.LogTrace($"Using MSI credentials for CosmosClient with endpoint: [{endpoint}] and clientId: [{metadata.ClientId}] .");
+                _logger.LogTrace($"Using MSI credentials to create CosmosClient with endpoint: [{endpoint}] and clientId: [{metadata.ClientId}] .");
                 return _factory.GetCosmosClient(endpoint, useCredentials: true, clientId: metadata.ClientId);
             }
             else
             {
-                _logger.LogTrace($"Using connection string for CosmosClient with Connection: [{connectionString}].");
+                _logger.LogTrace($"Using connection string to create CosmosClient.");
                 return _factory.GetCosmosClient(connectionString, useCredentials: false, clientId: null);
             }
         }
