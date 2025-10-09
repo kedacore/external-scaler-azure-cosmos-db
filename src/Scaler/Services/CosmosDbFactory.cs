@@ -7,7 +7,7 @@ namespace Keda.CosmosDb.Scaler
 {
     internal sealed class CosmosDbFactory
     {
-        private const string _applicationName = "KEDA-External-Scaler";
+        private const string _applicationName = "keda-external-azure-cosmos-db";
         // As per https://docs.microsoft.com/dotnet/api/microsoft.azure.cosmos.cosmosclient, it is recommended to
         // maintain a single instance of CosmosClient per lifetime of the application.
         private readonly ConcurrentDictionary<(string, string), CosmosClient> _cosmosClientCache = new();
