@@ -16,6 +16,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 ## Testing sample application locally on Docker
 
+> Note: Connection String is used to run the application locally on Docker, as Managed Identity is not available locally.
+
 1. Open command prompt or shell and change to the root directory of the cloned repo.
 
 1. Run the below commands to build the Docker container images for order-generator and order-processor applications.
@@ -25,7 +27,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker build --file .\src\Scaler.Demo\OrderProcessor\Dockerfile --force-rm --tag cosmosdb-order-processor .
     ```
 
-1. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below.
+2. Create test-database and test-container within the database in Cosmos DB account by running the order-generator application inside the container with `setup` option. Make sure to put the connection string of Cosmos DB account in the command below.
 
     ```text
     # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator setup
@@ -82,7 +84,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
         Order 135e1fb9-807a-489e-90f0-0cb4c3768a36 processed
     ```
 
-1. Stop order-processor container from the first shell.
+7. Stop order-processor container from the first shell.
 
     ```text
     # docker container ls --no-trunc --format "{{.Image}} {{.Names}}"
@@ -95,9 +97,31 @@ We will later deploy the order-processor application to Kubernetes cluster and u
 
 1. Follow one of the steps on [Deploying KEDA](https://keda.sh/docs/deploy/) documentation page to deploy KEDA on your Kubernetes cluster.
 
-1. Open command prompt or shell and change to the root directory of the cloned repo.
+1. **If using MI:**
 
-1. Build container image for the external scaler and push the image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
+    >[!NOTE]
+    > Guided tutorial here: [Integrate KEDA with AKS](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/integrate-keda)
+
+    a. Enable workload identity  
+    ```text
+        # az aks update -n <cluster-name> -g <resource-group-name> --enable-oidc-issuer --enable-workload-identity 
+    ```
+    b. Create User Assigned Identity
+    ```text
+        # az identity create --name <identity-name> --resource-group <resource-group-name> --location <location-name> 
+    ```
+    c. Follow the tutorial to grant MI both data-plane and control-pane access to the Cosmos DB: [Connect to Azure Cosmos DB using RBAC](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-connect-role-based-access-control?pivots=azure-portal).
+
+    d. [Create Service Account yaml](https://aka.ms/sa-aks-label)
+
+    e. Create federated identity credential 
+    ```text
+        # az identity federated-credential create --name <credential-name> --resource-group <resource-group-name> --identity-name <identity-name> --issuer <oidc-issuer-url> --subject system:serviceaccount:<namespace>:<serviceaccountname>
+    ```
+
+2. Open command prompt or shell and change to the root directory of the cloned repo.
+
+3. Build container image for the external scaler and push the image to Docker Hub. Make sure to replace `<docker-id>` in below commands with your Docker ID.
 
     ```text
     # docker build --file .\src\Scaler\Dockerfile --force-rm --tag cosmosdb-scaler .
@@ -106,7 +130,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker push <docker-id>/cosmosdb-scaler:latest
     ```
 
-1. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application.
+4. Update your Docker ID in the image path in manifest file `src/Scaler/deploy.yaml` and apply it to deploy the external scaler application. </br>
+   **If using MI**: *Add your service account name, and enable using workload identity in the manifest file as well.*
 
     ```text
     kubectl apply --filename=src/Scaler/deploy.yaml
@@ -122,13 +147,13 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # docker push <docker-id>/cosmosdb-order-processor:latest
     ```
 
-1. Update your Docker ID in the image path in manifest file `src/Scaler.Demo/OrderProcessor/deploy.yaml`. Also, update the values of connection strings to point to the test Cosmos DB account. Apply the manifest to deploy the order-processor application.
+2. Update your Docker ID in the image path in manifest file `src/Scaler.Demo/OrderProcessor/deploy.yaml`. Also, update the values of connection strings (or account endpoint and client ID, if using managed identity) to point to the test Cosmos DB account. Apply the manifest to deploy the order-processor application.
 
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy.yaml
     ```
 
-1. Ensure that the order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for it, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
+3. Ensure that the order-processor application is running correctly on the cluster by checking application logs. The application will create lease database and container if they do not exist, hence it is needed to run for a few seconds before we enable auto-scaling for order-processor, as that would immediately bring replicas to 0 if there are no orders pending to be processed.
 
     ```text
     # kubectl get pods
@@ -141,7 +166,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     ...
     ```
 
-1. Apply the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`
+4. Apply the manifest file for scaled object, `src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml`
 
     ```text
     kubectl apply --filename=src/Scaler.Demo/OrderProcessor/deploy-scaledobject.yaml
@@ -195,6 +220,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     cosmosdb-order-processor-b59956989-88dc5   1/1     Running   0          15s
     cosmosdb-order-processor-b59956989-dxp4b   1/1     Running   0          3s
     cosmosdb-scaler-64dd48678c-d6dqq           1/1     Running   0          35m
+
+    The external scaler scales the targets according to the number of change feeds that have non-zero pending messages remaining to be processed. The total number of change feeds (with or without pending messages) equals the number of physical partitions in the Cosmos DB container.
     ```
 
 1. You can also verify that both order-processor pods are able to share the processing of orders.
@@ -213,6 +240,8 @@ We will later deploy the order-processor application to Kubernetes cluster and u
         Processing order ca17597f-7aa2-4b04-abd8-724139b2c370 - 1 unit(s) of Gloves bought by Donny Shanahan
     ```
 
+1. To verify that the scale down is working, check that the cosmosdb-order-processor pod/s aren't running anymore after all orders are done processing. The default `cooldownPeriod` is 5 minutes, after which the cosmosdb-order-processor will stop running.
+
 ## Cleaning sample application from cluster
 
 1. Delete the scaled object and order-processor application.
@@ -222,7 +251,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # kubectl delete deployment cosmosdb-order-processor
     ```
 
-1. Optionally, delete the external scaler and KEDA from cluster. The following commands assume that KEDA was installed with Helm.
+2. Optionally, delete the external scaler and KEDA from cluster. The following commands assume that KEDA was installed with Helm.
 
     ```text
     # kubectl delete service cosmosdb-scaler
@@ -231,7 +260,7 @@ We will later deploy the order-processor application to Kubernetes cluster and u
     # kubectl delete namespace keda
     ```
 
-1. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
+3. The monitored container can be deleted with the below command. The lease container can be deleted on Azure Portal.
 
     ```text
     # docker run --env CosmosDbConfig__Connection="<connection-string>" --interactive --rm --tty cosmosdb-order-generator teardown

@@ -22,3 +22,6 @@ spec:
         leaseDatabaseId: StoreDatabase
         leaseContainerId: OrderProcessorLeases
         processorName: OrderProcessor
+        endpoint: "<cosmosdb-endpoint>"
+        leaseEndpoint: "<cosmosdb-endpoint>"
+        clientId: "<client-id>"

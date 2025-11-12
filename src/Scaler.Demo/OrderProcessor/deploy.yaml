@@ -14,13 +14,27 @@ spec:
     metadata:
       labels:
         app: cosmosdb-order-processor
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: <service-account-name>
       containers:
         - name: cosmosdb-order-processor
           image: <docker-id>/cosmosdb-order-processor:latest
           imagePullPolicy: Always
           env:
-            - name: CosmosDbConfig__Connection
-              value: <connection-string-of-monitored-container>
-            - name: CosmosDbConfig__LeaseConnection
-              value: <connection-string-of-lease-container>
+            - name: CosmosDbConfig__Connection                  # if using MSI, use account endpoint
+              value: <connection-string-or-endpoint-of-monitored-container>
+            - name: CosmosDbConfig__LeaseConnection             # if using MSI, use lease account endpoint
+              value: <connection-string-or-endpoint-of-lease-container>
+            - name: CosmosDbConfig__MsiClientId
+              value: "<client-id-if-using-mi>"
+            - name: CosmosDbConfig__DatabaseId
+              value: "StoreDatabase"
+            - name: CosmosDbConfig__ContainerId
+              value: "OrderContainer"
+            - name: CosmosDbConfig__LeaseDatabaseId
+              value: "StoreDatabase"
+            - name: CosmosDbConfig__LeaseContainerId
+              value: "OrderProcessorLeases"
+            - name: CosmosDbConfig__ProcessorName
+              value: "OrderProcessor"
