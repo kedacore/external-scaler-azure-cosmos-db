@@ -5,7 +5,7 @@ using Microsoft.Azure.Cosmos;
 
 namespace Keda.CosmosDb.Scaler
 {
-    internal sealed class CosmosDbFactory
+    internal class CosmosDbFactory
     {
         private const string _applicationName = "keda-external-azure-cosmos-db";
         // As per https://docs.microsoft.com/dotnet/api/microsoft.azure.cosmos.cosmosclient, it is recommended to
@@ -14,10 +14,12 @@ namespace Keda.CosmosDb.Scaler
 
         public CosmosClient GetCosmosClient(string endpointOrConnection, bool useCredentials, string clientId)
         {
-            return _cosmosClientCache.GetOrAdd((endpointOrConnection, clientId), CreateCosmosClient(endpointOrConnection, useCredentials, clientId));
+            return _cosmosClientCache.GetOrAdd(
+                (endpointOrConnection, clientId),
+                _ => CreateCosmosClient(endpointOrConnection, useCredentials, clientId));
         }
 
-        private CosmosClient CreateCosmosClient(string endpointOrConnection, bool useCredentials, string clientId)
+        protected internal virtual CosmosClient CreateCosmosClient(string endpointOrConnection, bool useCredentials, string clientId)
         {
             if (useCredentials)
             {
