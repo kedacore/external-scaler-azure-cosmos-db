@@ -1,3 +1,8 @@
+> **⚠️ Repository Archived**  
+> This repository and this external scaler has been archived, please use the built-in KEDA Azure Cosmos DB Scaler.
+>
+> The new built-in scaler is available from KEDA 2.21, see this issue for details: https://github.com/kedacore/keda/issues/7556.
+
 # KEDA External Scaler for Azure Cosmos DB
 
 Event-based autoscaler for your [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db/) change feed consumer applications running inside Kubernetes cluster.
